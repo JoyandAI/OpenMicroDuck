@@ -14,6 +14,12 @@ This project is **inspired by MicroDuck from Hugging Face / Pollen Robotics** â€
 
 It is our practice of **technology democratization**, and our thanks to MicroDuck.
 
+## **Community Group** 
+
+<p align="center">
+  <img src="./assets/f7457f1d6be0f8576fc5cc3072041b2f.jpg" width="50%">
+</p>
+
 ## Why we built it
 
 **Lower the barrier.** The core technology of bipedal robots is not as distant as it seems â€” but imported servo kits costing thousands of yuan, closed-source structures, and scattered tutorials keep too many people out. We took every piece apart, validated it, and re-implemented it with an affordable domestic supply chain, then opened everything: a main board that only needs RK3566-class compute, a battery pack that is safe and removable, and structures you can make on a single 3D printer.
