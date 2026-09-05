@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 980 720" width="980" height="720" role="img" aria-label="OpenMicroDuck 硬件模块（规划）">
+
+  <defs>
+    <marker id="ao" viewBox="0 0 12 10" refX="10.5" refY="5"
+            markerWidth="9" markerHeight="7.5" orient="auto" markerUnits="userSpaceOnUse">
+      <polyline points="1.5,1.5 10.5,5 1.5,8.5" fill="none" stroke="#4A6A88"
+                stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+    </marker>
+    <marker id="ao-rev" viewBox="0 0 12 10" refX="1.5" refY="5"
+            markerWidth="9" markerHeight="7.5" orient="auto-start-reverse" markerUnits="userSpaceOnUse">
+      <polyline points="1.5,1.5 10.5,5 1.5,8.5" fill="none" stroke="#4A6A88"
+                stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+    </marker>
+  </defs>
+
+  <rect x="0" y="0" width="980" height="720" fill="#F7F9FC" rx="16"/>
+  <text x="24" y="34" font-family="'Microsoft YaHei', '微软雅黑', 'PingFang SC', 'Noto Sans SC', sans-serif" font-size="16" font-weight="700" fill="#1B3A6B">OpenMicroDuck 硬件模块（规划）</text>
+
+  <rect x="190" y="52" width="580" height="80" rx="10" fill="#E8EEF8" stroke="#3A5A9A" stroke-width="1.9"/>
+    <text x="480.0" y="87.8" text-anchor="middle" font-family="'Microsoft YaHei', '微软雅黑', 'PingFang SC', 'Noto Sans SC', sans-serif" font-size="15" font-weight="600" fill="#1B3A6B">SoC</text>
+    <text x="480.0" y="106.8" text-anchor="middle" font-family="'Microsoft YaHei', '微软雅黑', 'PingFang SC', 'Noto Sans SC', sans-serif" font-size="14" font-weight="400" fill="#1B3A6B">NPU · ISP · Wi-Fi / BT</text>
+  <rect x="790" y="148" width="164" height="80" rx="10" fill="#E6F5F8" stroke="#2F7A8A" stroke-width="1.9"/>
+    <text x="872.0" y="184.2" text-anchor="middle" font-family="'Microsoft YaHei', '微软雅黑', 'PingFang SC', 'Noto Sans SC', sans-serif" font-size="12" font-weight="600" fill="#1B3A6B">图像传感器</text>
+    <text x="872.0" y="200.2" text-anchor="middle" font-family="'Microsoft YaHei', '微软雅黑', 'PingFang SC', 'Noto Sans SC', sans-serif" font-size="11" font-weight="400" fill="#1B3A6B">CSI 模组（未钉死）</text>
+  <path d="M 776 92 L 872 92 L 872 142" fill="none" stroke="#4A6A88" stroke-width="1.6" marker-end="url(#ao)"/>
+  <text x="824" y="80" text-anchor="middle" font-family="'Microsoft YaHei', '微软雅黑', 'PingFang SC', 'Noto Sans SC', sans-serif" font-size="11" font-weight="400" fill="#1B3A6B">MIPI CSI</text>
+  <rect x="360" y="160" width="360" height="122" rx="10" fill="#E8F4ED" stroke="#3D7A58" stroke-width="1.9"/>
+    <text x="540.0" y="208.6" text-anchor="middle" font-family="'Microsoft YaHei', '微软雅黑', 'PingFang SC', 'Noto Sans SC', sans-serif" font-size="13" font-weight="600" fill="#1B3A6B">开源 HAT / 电源扩展板</text>
+    <text x="540.0" y="225.6" text-anchor="middle" font-family="'Microsoft YaHei', '微软雅黑', 'PingFang SC', 'Noto Sans SC', sans-serif" font-size="12" font-weight="400" fill="#1B3A6B">半双工方向电路  ·  18650 配电</text>
+    <text x="540.0" y="242.6" text-anchor="middle" font-family="'Microsoft YaHei', '微软雅黑', 'PingFang SC', 'Noto Sans SC', sans-serif" font-size="12" font-weight="400" fill="#1B3A6B">音频 codec  ·  I²C 扩展</text>
+  <line x1="480" y1="138" x2="480" y2="154" stroke="#4A6A88" stroke-width="1.6" fill="none" marker-end="url(#ao)"/>
+  <text x="568" y="150" text-anchor="middle" font-family="'Microsoft YaHei', '微软雅黑', 'PingFang SC', 'Noto Sans SC', sans-serif" font-size="11" font-weight="400" fill="#1B3A6B">40-pin I²C+I²S</text>
+  <rect x="200" y="330" width="168" height="70" rx="10" fill="#E6F5F8" stroke="#2F7A8A" stroke-width="1.9"/>
+    <text x="284.0" y="361.2" text-anchor="middle" font-family="'Microsoft YaHei', '微软雅黑', 'PingFang SC', 'Noto Sans SC', sans-serif" font-size="12" font-weight="600" fill="#1B3A6B">DToF 8×8</text>
+    <text x="284.0" y="377.2" text-anchor="middle" font-family="'Microsoft YaHei', '微软雅黑', 'PingFang SC', 'Noto Sans SC', sans-serif" font-size="11" font-weight="400" fill="#1B3A6B">Qwiic / 0x29 一类</text>
+  <rect x="392" y="330" width="168" height="70" rx="10" fill="#E6F5F8" stroke="#2F7A8A" stroke-width="1.9"/>
+    <text x="476.0" y="361.2" text-anchor="middle" font-family="'Microsoft YaHei', '微软雅黑', 'PingFang SC', 'Noto Sans SC', sans-serif" font-size="12" font-weight="600" fill="#1B3A6B">头部 IMU</text>
+    <text x="476.0" y="377.2" text-anchor="middle" font-family="'Microsoft YaHei', '微软雅黑', 'PingFang SC', 'Noto Sans SC', sans-serif" font-size="11" font-weight="400" fill="#1B3A6B">I²C · 不进控制环</text>
+  <rect x="584" y="330" width="196" height="70" rx="10" fill="#F4EEF8" stroke="#6B4A8A" stroke-width="1.9"/>
+    <text x="682.0" y="361.2" text-anchor="middle" font-family="'Microsoft YaHei', '微软雅黑', 'PingFang SC', 'Noto Sans SC', sans-serif" font-size="12" font-weight="600" fill="#1B3A6B">麦克风 / 扬声器</text>
+    <text x="682.0" y="377.2" text-anchor="middle" font-family="'Microsoft YaHei', '微软雅黑', 'PingFang SC', 'Noto Sans SC', sans-serif" font-size="11" font-weight="400" fill="#1B3A6B">经 codec · ALSA</text>
+  <path d="M 430 288 L 284 324" fill="none" stroke="#4A6A88" stroke-width="1.6" marker-start="url(#ao-rev)" marker-end="url(#ao)"/>
+  <text x="300" y="300" text-anchor="middle" font-family="'Microsoft YaHei', '微软雅黑', 'PingFang SC', 'Noto Sans SC', sans-serif" font-size="11" font-weight="400" fill="#1B3A6B">I²C ≤400 kHz</text>
+  <path d="M 540 288 L 476 324" fill="none" stroke="#4A6A88" stroke-width="1.6" marker-start="url(#ao-rev)" marker-end="url(#ao)"/>
+  <path d="M 640 288 L 682 324" fill="none" stroke="#4A6A88" stroke-width="1.6" marker-start="url(#ao-rev)" marker-end="url(#ao)"/>
+  <path d="M 184 92 L 80 92 L 80 446" fill="none" stroke="#4A6A88" stroke-width="1.6" marker-start="url(#ao-rev)" marker-end="url(#ao)"/>
+  <text x="132" y="270" text-anchor="middle" font-family="'Microsoft YaHei', '微软雅黑', 'PingFang SC', 'Noto Sans SC', sans-serif" font-size="11" font-weight="400" fill="#1B3A6B">UART TTL 半双工</text>
+  <rect x="40" y="452" width="900" height="50" rx="10" fill="#FFF4E5" stroke="#B07A2A" stroke-width="1.9"/>
+    <text x="490.0" y="481.9" text-anchor="middle" font-family="'Microsoft YaHei', '微软雅黑', 'PingFang SC', 'Noto Sans SC', sans-serif" font-size="14" font-weight="600" fill="#1B3A6B">舵机总线  ·  Feetech 兼容协议  ·  TTL 半双工</text>
+  <rect x="40" y="536" width="210" height="78" rx="10" fill="#FDECEE" stroke="#A84A62" stroke-width="1.9"/>
+    <text x="145.0" y="571.0" text-anchor="middle" font-family="'Microsoft YaHei', '微软雅黑', 'PingFang SC', 'Noto Sans SC', sans-serif" font-size="13" font-weight="600" fill="#1B3A6B">左腿 ×5</text>
+    <text x="145.0" y="588.0" text-anchor="middle" font-family="'Microsoft YaHei', '微软雅黑', 'PingFang SC', 'Noto Sans SC', sans-serif" font-size="12" font-weight="400" fill="#1B3A6B">ID 20–24</text>
+  <line x1="145" y1="508" x2="145" y2="530" stroke="#4A6A88" stroke-width="1.6" fill="none" marker-start="url(#ao-rev)" marker-end="url(#ao)"/>
+  <rect x="270" y="536" width="210" height="78" rx="10" fill="#FDECEE" stroke="#A84A62" stroke-width="1.9"/>
+    <text x="375.0" y="571.0" text-anchor="middle" font-family="'Microsoft YaHei', '微软雅黑', 'PingFang SC', 'Noto Sans SC', sans-serif" font-size="13" font-weight="600" fill="#1B3A6B">右腿 ×5</text>
+    <text x="375.0" y="588.0" text-anchor="middle" font-family="'Microsoft YaHei', '微软雅黑', 'PingFang SC', 'Noto Sans SC', sans-serif" font-size="12" font-weight="400" fill="#1B3A6B">ID 10–14</text>
+  <line x1="375" y1="508" x2="375" y2="530" stroke="#4A6A88" stroke-width="1.6" fill="none" marker-start="url(#ao-rev)" marker-end="url(#ao)"/>
+  <rect x="500" y="536" width="210" height="78" rx="10" fill="#FDECEE" stroke="#A84A62" stroke-width="1.9"/>
+    <text x="605.0" y="571.0" text-anchor="middle" font-family="'Microsoft YaHei', '微软雅黑', 'PingFang SC', 'Noto Sans SC', sans-serif" font-size="13" font-weight="600" fill="#1B3A6B">头颈 + 嘴 ×5</text>
+    <text x="605.0" y="588.0" text-anchor="middle" font-family="'Microsoft YaHei', '微软雅黑', 'PingFang SC', 'Noto Sans SC', sans-serif" font-size="12" font-weight="400" fill="#1B3A6B">ID 30–34</text>
+  <line x1="605" y1="508" x2="605" y2="530" stroke="#4A6A88" stroke-width="1.6" fill="none" marker-start="url(#ao-rev)" marker-end="url(#ao)"/>
+  <rect x="730" y="536" width="210" height="78" rx="10" fill="#F3EAF8" stroke="#7A4A9A" stroke-width="1.9"/>
+    <text x="835.0" y="571.0" text-anchor="middle" font-family="'Microsoft YaHei', '微软雅黑', 'PingFang SC', 'Noto Sans SC', sans-serif" font-size="13" font-weight="600" fill="#1B3A6B">机身 imu_to_ft</text>
+    <text x="835.0" y="588.0" text-anchor="middle" font-family="'Microsoft YaHei', '微软雅黑', 'PingFang SC', 'Noto Sans SC', sans-serif" font-size="12" font-weight="400" fill="#1B3A6B">总线从机  ID 200</text>
+  <line x1="835" y1="508" x2="835" y2="530" stroke="#4A6A88" stroke-width="1.6" fill="none" marker-start="url(#ao-rev)" marker-end="url(#ao)"/>
+  <g font-family="'Microsoft YaHei', '微软雅黑', 'PingFang SC', 'Noto Sans SC', sans-serif" font-size="11" fill="#1B3A6B">
+    <rect x="40" y="640" width="14" height="14" rx="4" fill="#E8EEF8" stroke="#3A5A9A" stroke-width="1.4"/>
+    <text x="60" y="652">SoC</text>
+    <rect x="118" y="640" width="14" height="14" rx="4" fill="#E8F4ED" stroke="#3D7A58" stroke-width="1.4"/>
+    <text x="138" y="652">扩展板 / 电源</text>
+    <rect x="256" y="640" width="14" height="14" rx="4" fill="#E6F5F8" stroke="#2F7A8A" stroke-width="1.4"/>
+    <text x="276" y="652">传感器</text>
+    <rect x="334" y="640" width="14" height="14" rx="4" fill="#F4EEF8" stroke="#6B4A8A" stroke-width="1.4"/>
+    <text x="354" y="652">音频</text>
+    <rect x="412" y="640" width="14" height="14" rx="4" fill="#FFF4E5" stroke="#B07A2A" stroke-width="1.4"/>
+    <text x="432" y="652">舵机总线</text>
+    <rect x="502" y="640" width="14" height="14" rx="4" fill="#FDECEE" stroke="#A84A62" stroke-width="1.4"/>
+    <text x="522" y="652">执行器</text>
+    <rect x="580" y="640" width="14" height="14" rx="4" fill="#F3EAF8" stroke="#7A4A9A" stroke-width="1.4"/>
+    <text x="600" y="652">IMU 从机</text>
+  </g>
+  <text x="40" y="688" font-family="'Microsoft YaHei', '微软雅黑', 'PingFang SC', 'Noto Sans SC', sans-serif" font-size="12" fill="#1B3A6B">NPU 与 ISP 必备（入门算力即可，为控功耗）；换 Feetech 后须重训，契约仍为 obs 61 → act 14。</text>
+</svg>

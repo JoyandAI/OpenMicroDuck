@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 980 430" width="980" height="430" role="img" aria-label="软件总览：离线训练与板载执行">
+
+  <defs>
+    <marker id="ao" viewBox="0 0 12 10" refX="10.5" refY="5"
+            markerWidth="9" markerHeight="7.5" orient="auto" markerUnits="userSpaceOnUse">
+      <polyline points="1.5,1.5 10.5,5 1.5,8.5" fill="none" stroke="#4A6A88"
+                stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+    </marker>
+    <marker id="ao-rev" viewBox="0 0 12 10" refX="1.5" refY="5"
+            markerWidth="9" markerHeight="7.5" orient="auto-start-reverse" markerUnits="userSpaceOnUse">
+      <polyline points="1.5,1.5 10.5,5 1.5,8.5" fill="none" stroke="#4A6A88"
+                stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+    </marker>
+  </defs>
+
+  <rect x="0" y="0" width="980" height="430" fill="#F7F9FC" rx="16"/>
+  <text x="24" y="34" font-family="'Microsoft YaHei', '微软雅黑', 'PingFang SC', 'Noto Sans SC', sans-serif" font-size="16" font-weight="700" fill="#1B3A6B">软件总览：离线训练与板载执行</text>
+
+  <rect x="24" y="52" width="450" height="318" rx="14" fill="#F4F7FB" stroke="#B7C6D6" stroke-width="1.3"/>
+  <text x="38" y="74" font-family="'Microsoft YaHei', '微软雅黑', 'PingFang SC', 'Noto Sans SC', sans-serif" font-size="12" font-weight="700" fill="#1B3A6B">开发机 / Hugging Face Jobs</text>
+  <rect x="506" y="52" width="450" height="318" rx="14" fill="#F4F7FB" stroke="#B7C6D6" stroke-width="1.3"/>
+  <text x="520" y="74" font-family="'Microsoft YaHei', '微软雅黑', 'PingFang SC', 'Noto Sans SC', sans-serif" font-size="12" font-weight="700" fill="#1B3A6B">板上 Linux（RK3566 同级）</text>
+  <rect x="52" y="92" width="394" height="118" rx="10" fill="#FFF8E0" stroke="#B08A20" stroke-width="1.9"/>
+    <text x="249.0" y="137.9" text-anchor="middle" font-family="'Microsoft YaHei', '微软雅黑', 'PingFang SC', 'Noto Sans SC', sans-serif" font-size="14" font-weight="600" fill="#1B3A6B">mjlab + MuJoCo Warp</text>
+    <text x="249.0" y="155.9" text-anchor="middle" font-family="'Microsoft YaHei', '微软雅黑', 'PingFang SC', 'Noto Sans SC', sans-serif" font-size="13" font-weight="400" fill="#1B3A6B">PPO · BAM 执行器模型</text>
+    <text x="249.0" y="173.9" text-anchor="middle" font-family="'Microsoft YaHei', '微软雅黑', 'PingFang SC', 'Noto Sans SC', sans-serif" font-size="13" font-weight="400" fill="#1B3A6B">域随机化 · 回差仿真</text>
+  <rect x="52" y="248" width="394" height="96" rx="10" fill="#F3EAF8" stroke="#7A4A9A" stroke-width="1.9"/>
+    <text x="249.0" y="291.9" text-anchor="middle" font-family="'Microsoft YaHei', '微软雅黑', 'PingFang SC', 'Noto Sans SC', sans-serif" font-size="14" font-weight="600" fill="#1B3A6B">.onnx + manifest.json</text>
+    <text x="249.0" y="309.9" text-anchor="middle" font-family="'Microsoft YaHei', '微软雅黑', 'PingFang SC', 'Noto Sans SC', sans-serif" font-size="13" font-weight="400" fill="#1B3A6B">obs 61  →  act 14  ·  50 Hz</text>
+  <line x1="249" y1="210" x2="249" y2="248" stroke="#4A6A88" stroke-width="1.6" fill="none" marker-end="url(#ao)"/>
+  <text x="278" y="232" text-anchor="middle" font-family="'Microsoft YaHei', '微软雅黑', 'PingFang SC', 'Noto Sans SC', sans-serif" font-size="11" font-weight="400" fill="#1B3A6B">导出</text>
+  <rect x="534" y="92" width="394" height="118" rx="10" fill="#E8F4F0" stroke="#2F7A6B" stroke-width="1.9"/>
+    <text x="731.0" y="137.9" text-anchor="middle" font-family="'Microsoft YaHei', '微软雅黑', 'PingFang SC', 'Noto Sans SC', sans-serif" font-size="14" font-weight="600" fill="#1B3A6B">systemd 守护进程簇</text>
+    <text x="731.0" y="155.9" text-anchor="middle" font-family="'Microsoft YaHei', '微软雅黑', 'PingFang SC', 'Noto Sans SC', sans-serif" font-size="13" font-weight="400" fill="#1B3A6B">JSON-RPC / Unix socket</text>
+    <text x="731.0" y="173.9" text-anchor="middle" font-family="'Microsoft YaHei', '微软雅黑', 'PingFang SC', 'Noto Sans SC', sans-serif" font-size="13" font-weight="400" fill="#1B3A6B">mediad · tofd · padd · btd …</text>
+  <rect x="534" y="248" width="394" height="96" rx="10" fill="#E8EEF8" stroke="#3A5A9A" stroke-width="1.9"/>
+    <text x="731.0" y="291.9" text-anchor="middle" font-family="'Microsoft YaHei', '微软雅黑', 'PingFang SC', 'Noto Sans SC', sans-serif" font-size="14" font-weight="600" fill="#1B3A6B">robotd  @  50 Hz</text>
+    <text x="731.0" y="309.9" text-anchor="middle" font-family="'Microsoft YaHei', '微软雅黑', 'PingFang SC', 'Noto Sans SC', sans-serif" font-size="13" font-weight="400" fill="#1B3A6B">观测 → 策略 → 安全钳位 → 舵机</text>
+  <line x1="731" y1="210" x2="731" y2="248" stroke="#4A6A88" stroke-width="1.6" fill="none" marker-end="url(#ao)"/>
+  <text x="760" y="232" text-anchor="middle" font-family="'Microsoft YaHei', '微软雅黑', 'PingFang SC', 'Noto Sans SC', sans-serif" font-size="11" font-weight="400" fill="#1B3A6B">拉起</text>
+  <path d="M 446 296 L 534 296" fill="none" stroke="#4A6A88" stroke-width="1.6" marker-end="url(#ao)"/>
+  <text x="490" y="282" text-anchor="middle" font-family="'Microsoft YaHei', '微软雅黑', 'PingFang SC', 'Noto Sans SC', sans-serif" font-size="11" font-weight="400" fill="#1B3A6B">部署 / Hub 拉取</text>
+  <g font-family="'Microsoft YaHei', '微软雅黑', 'PingFang SC', 'Noto Sans SC', sans-serif" font-size="11" fill="#1B3A6B">
+    <rect x="24" y="392" width="14" height="14" rx="4" fill="#FFF8E0" stroke="#B08A20" stroke-width="1.4"/>
+    <text x="44" y="404">训练</text>
+    <rect x="102" y="392" width="14" height="14" rx="4" fill="#F3EAF8" stroke="#7A4A9A" stroke-width="1.4"/>
+    <text x="122" y="404">策略模型</text>
+    <rect x="192" y="392" width="14" height="14" rx="4" fill="#E8F4F0" stroke="#2F7A6B" stroke-width="1.4"/>
+    <text x="212" y="404">系统服务</text>
+    <rect x="282" y="392" width="14" height="14" rx="4" fill="#E8EEF8" stroke="#3A5A9A" stroke-width="1.4"/>
+    <text x="302" y="404">控制环</text>
+  </g>
+</svg>
