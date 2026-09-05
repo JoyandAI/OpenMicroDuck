@@ -1,77 +1,93 @@
 # OpenMicroDuck
 
-**A fully open-source 25 cm bipedal robot duck**
+**一只完全开源的 25cm 双足机器人**
 
-[English](README.md) | [中文](README_zh.md)
+[English](README_en.md) | [中文](README.md)
 
 ---
 
-## What is this
+## 这是什么
 
-OpenMicroDuck is a **fully open-source** bipedal robot platform: a 25 cm, sub-1 kg duckling with 15 degrees of freedom that walks, turns its head, makes sounds, and can run reinforcement-learning policies.
+OpenMicroDuck 是一个**完全开源**的双足机器人平台：一只 25cm 高、不到 1kg 的小鸭子，15 个自由度，能走、会转头、能发声，可以运行强化学习策略。
 
-This project is **inspired by MicroDuck from Hugging Face / Pollen Robotics** — our thanks to them for bringing this little duck into the world and showing developers everywhere that a bipedal robot can be this lovable and within reach, and for openly sharing their training ecosystem so we can stand on their shoulders and keep going. Building on MicroDuck, we will publicly release the hardware drawings, PCB, BOM, software stack, and training environment from our reproduction process.
+本项目受** Hugging Face / Pollen Robotics 的 MicroDuck**的启发——感谢他们把这只小鸭子带到世界面前，让全球开发者看到双足机器人可以如此可爱而触手可及；也感谢他们以开放的态度公开训练生态，让我们得以站在他们的肩膀上继续向前。在 MicroDuck 的基础上，我们将把复现过程的硬件图纸、PCB、BOM、软件栈、训练环境——全部公开发布。
 
-It is our practice of **technology democratization**, and our thanks to MicroDuck.
+它是我们对"技术平权"的一次实践，也是对 MicroDuck 的致谢。
 
-## **Community Group** 
+## 交流群
 
-<p align="center">
-  <img src="./assets/f7457f1d6be0f8576fc5cc3072041b2f.jpg" width="50%">
-</p>
+<img src="./assets/f7457f1d6be0f8576fc5cc3072041b2f.jpg" width="50%">
 
-## Why we built it
+## 当前进展
 
-**Lower the barrier.** The core technology of bipedal robots is not as distant as it seems — but imported servo kits costing thousands of yuan, closed-source structures, and scattered tutorials keep too many people out. We took every piece apart, validated it, and re-implemented it with an affordable domestic supply chain, then opened everything: a main board that only needs RK3566-class compute, a battery pack that is safe and removable, and structures you can make on a single 3D printer.
+![](./assets/MicroDuck_2909.jpg)
 
-**Grow the ecosystem.** We hope more supply-chain partners will join in — servos, main boards, batteries, 3D-printing and injection-molded structures. The compatibility matrix is public; equivalent parts from any manufacturer can be adapted. Competition happens on open standards, and the whole ecosystem benefits.
+ 这是我们用飞特 HL-2909 和3D打印件组装的一台样机，用于验证结构兼容和舵机协议。
 
-**Spark more creativity.** What a duck can do should not be defined by us. Re-skin it, even change its form, write a new skill, tune a new gait, add a sensor — we look forward to more developer remixes, and to uses we could never imagine. What you create is not just a robot duck; it is the starting point of the next interesting, valuable product.
+Zero转接HAT板已经下单打样贴片，等回片后测试。在此期间，会先验证舵机控制和通信协议。
 
-## Key specs
+## 为什么做这个项目
 
-| Item | Spec (planned) |
-|---|---|
-| Body | 25 cm / ≤1 kg |
-| DoF | 15 (5×2 legs + 4 head-neck + 1 beak) |
-| Servos | 15 × Feetech-compatible alternatives |
-| Main board | RK3566-class compute platform |
-| Control | 50 Hz on-board policy loop; RL training based on MuJoCo / PPO |
-| Battery | Swappable 18650 battery pack |
-| Structure | 3D-printed (FDM / resin) + sheet metal parts |
+**让门槛再低一点。** 双足机器人的核心技术并没有想象中遥远，但一套进口舵机动辄数千元、关键结构闭源、教程零散——把太多人挡在了门外。我们把每个环节拆开、验证、用可负担的国产供应链重新实现，然后把一切公开：主控只要求 RK3566 同级算力，电池组安全、可拆解，结构件一台 3D 打印机就能做出来。
 
-## Roadmap
+**让生态再大一点。** 我们希望更多供应链厂商参与进来——舵机、主控、电池、3D 打印与注塑结构件。兼容性矩阵公开，任何厂商的同类器件都可以来适配。竞争发生在开放的标准上，受益的是整个生态。
 
-| Milestone | Date | Goal |
-|---|---|---|
-| M1 | 2026-09 | Full assembly; RL walking validation |
-| M2 | 2026-10 | Design freeze; drawings / BOM / firmware fully open-sourced; first third-party reproductions |
-| M3 | 2026-11 | **Stable reproducibility for developers**; bilingual (CN/EN) tutorials live; reproduction success rate published |
-| M4 | 2026-12 | Complete experience ready; structure × electronics compatibility matrix v1 |
-| M5 | 2027 ~ | Ecosystem growth: skill packs, ongoing compatibility work |
+**让创意再多一点。** 一只鸭子能做什么，不该由我们定义。换一个皮肤甚至换一种形态、写一个新技能、改一套步态、接一颗传感器——我们期待看到更多开发者的二创、以及我们根本想象不到的玩法。你创造的不只是一台机器鸭，而是下一个有意思、有价值产品的起点。
 
-An open-source project is not measured by small-batch unit counts, but by reproduction success rate and developer experience. Every milestone is reviewed in public; test data and issue lists are fully open.
+## 规格速览
 
-## Get involved
 
-Every level of contribution matters:
+| 项目  | 参数（规划）                          |
+| --- | ------------------------------- |
+| 整机  | 25cm / ≤1kg                     |
+| 自由度 | 15（腿 5×2 + 头颈 4 + 鸭嘴 1）         |
+| 舵机  | 15 × Feetech 平替款                |
+| 主控  | RK3566 同级算力平台                   |
+| 控制  | 50Hz 板载策略环，RL 训练基于 MuJoCo / PPO |
+| 电池  | 18650 可拆卸电池组                    |
+| 结构件 | 3D 打印（FDM / 光固化）＋ 钣金件           |
 
-1. **Follow** — Star this repo, join the community (Discord / Bilibili / WeChat groups), follow the progress and spread the word
-2. **Docs** — Write and translate bilingual tutorials
-3. **Reproduce** — Print, assemble, file Issues on tolerances and interference; reproduction data is the hardest currency of open hardware
-4. **Create** — Skill packs, appearance remixes, training-pipeline improvements
-5. **Co-build** — Core-module PRs; join the maintainer committee and shape the technical direction together
 
-See `CONTRIBUTING.md` (coming soon).
 
-## Licenses
 
-| Content | License |
-|---|---|
-| Hardware drawings, PCB, BOM | CERN-OHL-S |
-| Software stack, training environment | Apache-2.0 |
-| Tutorials & docs | CC BY-SA |
+## 路线图
 
-## Acknowledgements
 
-This project is inspired by MicroDuck from Hugging Face / Pollen Robotics and reuses their publicly available training ecosystem. Once again, our thanks to the MicroDuck team for their pioneering work and open spirit — without them, this project would not exist. OpenMicroDuck is an independent community open-source project with no affiliation to Hugging Face or Pollen Robotics.
+| 里程碑 | 时间      | 目标                             |
+| --- | ------- | ------------------------------ |
+| M1  | 2026-09 | 整机组装，RL 行走验证                   |
+| M2  | 2026-10 | 设计冻结；图纸 / BOM / 固件全量开源；首批第三方复现 |
+| M3  | 2026-11 | **开发者可稳定复现**；中英双语教程上线；复现成功率公开  |
+| M4  | 2026-12 | 完整体验就绪；结构件 × 电子器件兼容性矩阵 v1      |
+| M5  | 2027 ~  | 生态放大：技能包、兼容性持续优化               |
+
+
+开源项目不拼小批量台数，拼的是复现成功率与开发者体验。每个里程碑公开评审，测试数据与问题清单全量开放。
+
+## 如何参与
+
+任何程度的参与都有意义：
+
+1. **关注** —— Star 本仓库，加入社区（Discord / B 站 / 微信群），见证并传播进展
+2. **文档** —— 中英双语教程写作、文档翻译
+3. **复现** —— 打印、组装，把公差与干涉问题提 Issue；复现数据是开源硬件最硬的通货
+4. **创作** —— 技能包、外观二创、训练管线改进
+5. **共建** —— 核心模块 PR，进入维护者委员会，共同决定技术方向
+
+贡献指南见 `CONTRIBUTING.md`（待发布）。
+
+## 许可证
+
+
+| 内容           | 许可证        |
+| ------------ | ---------- |
+| 硬件图纸、PCB、BOM | CERN-OHL-S |
+| 软件栈、训练环境     | Apache-2.0 |
+| 教程与文档        | CC BY-SA   |
+
+
+
+
+## 致谢
+
+本项目受 Hugging Face / Pollen Robotics 的 MicroDuck启发，并复用了其公开的训练生态。再次感谢 MicroDuck 团队的开创性工作与开放精神——没有他们，就没有这个项目。OpenMicroDuck 是独立的社区开源项目，与 Hugging Face、Pollen Robotics 无隶属关系。
