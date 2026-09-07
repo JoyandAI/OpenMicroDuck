@@ -11,7 +11,7 @@
 | -------- | -------------------------------------------------------------- |
 | **官方**   | 产品页、新闻稿，或 `pollen-robotics/microduck` / `microduck_rl` 源码与设计文档 |
 | **源码还原** | 运行时写死的设备路径、I²C 地址、寄存器；社区据此还原，非官方 BOM                           |
-| **规划**   | 本仓库 README 与规划文档                                     |
+| **规划**   | 本仓库 README 与规划文档                                               |
 | **未定**   | 公开材料互相矛盾，或量产件尚未冻结                                              |
 
 
@@ -179,24 +179,29 @@ WebRTC 会话可以双向带麦克风和喇叭，用于遥在；本地叫声和�
 #### 模块与接口（规划）
 
 
-| 模块     | 规划形态                              | 物理接口                         | 协议                                                        | 备注                                          |
-| ------ | --------------------------------- | ---------------------------- | --------------------------------------------------------- | ------------------------------------------- |
-| 计算主控   | RK3566 同级 SBC                     | 40-pin、CSI、UART、USB-C        | Linux 外设                                                  | 不绑定 Radxa；要能跑 50 Hz ORT + 可选推流              |
-| 舵机 ×15 | Feetech 平替                        | 3 线：GND / 电源 / DATA          | 厂家 TTL 总线（与 Dynamixel 类似的半双工包）                            | 换执行器必须 **重训** 策略；官方 ONNX 不能当 bit-exact 用    |
-| 机身 IMU | `imu_to_ft` 自制板 | 挂在舵机总线上                      | 规划对齐官方从机：ID 200、1 Mbps、寄存器 124 起 12 字节（陀螺 i16 + 四元数 fp16） | MCU + LSM6DSV16X（SFLP）+ 半双工 PHY；控制环不在主机上做融合 |
-| 头部 IMU | 小 I²C 模组 | 4 针：GND / 3V3 / SDA / SCL    | I²C ≤400 kHz                                              | **不进平衡环**；与 ToF 共总线，注意地址                    |
-| 图像传感器  | CSI 摄像头模组                         | MIPI CSI（控制常走 I²C `0x10` 一类） | CSI-2 + I²C                                               | 具体传感器未钉死；软件侧按「感知在 `mediad`」接                |
-| DToF   | 8×8 多区 ToF                        | Qwiic / Stemma 类 3.3 V I²C   | I²C，常见地址 `0x29`                                           | VL53L5CX / L8CX 一类；`tofd` 发布矩阵              |
-| 麦克风    | MEMS，经 codec 或板载                  | I²S 数据 + I²C 控制              | ALSA                                                      | 可与官方 HAT 路线兼容，或换国产 codec                    |
-| 扬声器    | 小喇叭                               | codec line-out / 功放          | I²S → 模拟                                                  | `aplay` 播预渲染 bank                           |
-| 电源     | 18650 可拆组                         | HAT 作配电                      | —                                                         | 与官方 NP-F550 不同；需自管充电、过放、舵机供电轨               |
+| 模块     | 规划形态             | 物理接口                         | 协议                                                        | 备注                                          |
+| ------ | ---------------- | ---------------------------- | --------------------------------------------------------- | ------------------------------------------- |
+| 计算主控   | RK3566 同级 SBC    | 40-pin、CSI、UART、USB-C        | Linux 外设                                                  | 不绑定 Radxa；要能跑 50 Hz ORT + 可选推流              |
+| 舵机 ×15 | Feetech 平替       | 3 线：GND / 电源 / DATA          | 厂家 TTL 总线（与 Dynamixel 类似的半双工包）                            | 换执行器必须 **重训** 策略；官方 ONNX 不能当 bit-exact 用    |
+| 机身 IMU | `imu_to_ft` 自制板  | 挂在舵机总线上                      | 规划对齐官方从机：ID 200、1 Mbps、寄存器 124 起 12 字节（陀螺 i16 + 四元数 fp16） | MCU + LSM6DSV16X（SFLP）+ 半双工 PHY；控制环不在主机上做融合 |
+| 头部 IMU | 小 I²C 模组         | 4 针：GND / 3V3 / SDA / SCL    | I²C ≤400 kHz                                              | **不进平衡环**；与 ToF 共总线，注意地址                    |
+| 图像传感器  | CSI 摄像头模组        | MIPI CSI（控制常走 I²C `0x10` 一类） | CSI-2 + I²C                                               | 具体传感器未钉死；软件侧按「感知在 `mediad`」接                |
+| DToF   | 8×8 多区 ToF       | Qwiic / Stemma 类 3.3 V I²C   | I²C，常见地址 `0x29`                                           | VL53L5CX / L8CX 一类；`tofd` 发布矩阵              |
+| 麦克风    | MEMS，经 codec 或板载 | I²S 数据 + I²C 控制              | ALSA                                                      | 可与官方 HAT 路线兼容，或换国产 codec                    |
+| 扬声器    | 小喇叭              | codec line-out / 功放          | I²S → 模拟                                                  | `aplay` 播预渲染 bank                           |
+| 电源     | 18650 可拆组        | HAT 作配电                      | —                                                         | 与官方 NP-F550 不同；需自管充电、过放、舵机供电轨               |
 
 
 舵机 ID 规划与官方运行时对齐，便于沿用观测布局（嘴仍是策略外的第 15 轴）：
 
 ```text
-右腿  10–14    左腿  20–24    颈/头/嘴  30–34    机身 IMU  200
+右腿          10 right_hip_yaw · 11 right_hip_roll · 12 right_hip_pitch · 13 right_knee · 14 right_ankle
+左腿          20 left_hip_yaw  · 21 left_hip_roll  · 22 left_hip_pitch  · 23 left_knee  · 24 left_ankle
+颈 / 头 / 嘴  30 neck_pitch    · 31 head_pitch     · 32 head_yaw        · 33 head_roll  · 34 mouth
+机身 IMU      200
 ```
+
+![舵机之间的连接关系](servos_connection.png)
 
 HAT 需要至少三件事：舵机半双工方向电路、电池配电、I²C/I²S 外设。官方 `[elec_RPI_Robot_HAT](https://github.com/pollen-robotics/elec_RPI_Robot_HAT)` 已开源且标明可驱动 Dynamixel **或 Feetech**（线序可能要改），可作第一版参考，再按 18650 与国产件重画。
 
@@ -238,9 +243,9 @@ HAT 需要至少三件事：舵机半双工方向电路、电池配电、I²C/I�
 
 ```text
 imu_to_dxl    200
-左腿          20 hip_yaw · 21 hip_roll · 22 hip_pitch · 23 knee · 24 ankle
-右腿          10–14（镜像）
-颈 / 头 / 嘴  30 neck_pitch · 31 head_pitch · 32 head_yaw · 33 head_roll · 34 mouth
+右腿          10 right_hip_yaw · 11 right_hip_roll · 12 right_hip_pitch · 13 right_knee · 14 right_ankle
+左腿          20 left_hip_yaw  · 21 left_hip_roll  · 22 left_hip_pitch  · 23 left_knee  · 24 left_ankle
+颈 / 头 / 嘴  30 neck_pitch    · 31 head_pitch     · 32 head_yaw        · 33 head_roll  · 34 mouth
 ```
 
 `imu_to_dxl` 12 字节块（与 15 个舵机同一趟读，主机不做融合）：
@@ -281,7 +286,7 @@ HAT 上 I²C3 占用 40-pin 的 3/5。Radxa 原厂把同一控制器的 M1 给�
 | 软件       | 同一套：PPO 离线训 → ONNX → 板上 50 Hz `robotd` | 同左（官方实现）                       |
 | 主控       | RK3566 **同级**，不绑模块                     | 产品：RK3566；开发板还原为 Radxa Zero 3W |
 | 舵机       | Feetech 平替                             | Dynamixel XL330                |
-| 机身 IMU   | 自制 `imu_to_ft`，行为对齐 ID 200            | 同结构，原理图未开源                     |
+| 机身 IMU   | 自制 `imu_to_ft`，行为对齐 ID 200             | 同结构，原理图未开源                     |
 | 头部 IMU   | I²C 辅助模组，不进控制环                         | 规格有；运行时未用                      |
 | ToF / 相机 | 同角色（I²C 8×8 + CSI）                     | VL53L5/8CX + IMX219 路径         |
 | 电池       | 18650 可拆组                              | NP-F550                        |

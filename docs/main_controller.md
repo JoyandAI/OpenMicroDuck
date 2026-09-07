@@ -24,7 +24,7 @@ NPU 相关只引用 **Pollen / Hugging Face 官方仓** 能交叉核对的内容
 尚未做兼容性矩阵。当前倾向：
 
 
-| 优先级 | 选择                                                 | 原因                                            |
+| 序号 | 选择                                                 | 原因                                            |
 | --- | -------------------------------------------------- | --------------------------------------------- |
 | 1   | 能买到的 **Radxa ZERO 3W**（≥1 GB，有 eMMC 更好）            | 与官方栈差异最小                                      |
 | 2   | 其它 **RK3566** Zero 模组，或 **CM4 兼容核心板**（如 Radxa CM3） | 同族 NPU 与相机；载板反正要重画                            |
@@ -36,7 +36,7 @@ NPU 相关只引用 **Pollen / Hugging Face 官方仓** 能交叉核对的内容
 最快的办法是 **直接买 Radxa ZERO 3W**，而且尽量靠近官方那档 1 GB + 32 GB eMMC：设备树、overlay、NPU 脚本、HAT 针脚都已经按这块板写过。但这块板现在常缺货、溢价。长远看，OpenMicroDuck **不把某一 SKU 写进规范**。能接近，就可以做方案。接近分两条，可以只满足一条，最好两条都沾边：
 
 1. **外形足够小**：能塞进头或身体。Zero（约 65×30 mm）和 **CM4 兼容核心板**（约 55×40 mm）都够小。HAT / 转接板反正要重画，不必死守 40-pin Zero 针脚。
-2. **SoC 性能接近**：四核 A55 同级（或更强）即可，**不绑定 aarch64**；要有可用的板载 AI 加速（RKNN 或同级）、CSI 和足够 RAM。RISC-V 如进迭时空 K1 也在候选里，见 §7。
+2. **SoC 性能接近**：四核 A55 同级（或更强）即可，**不绑定 aarch64**；要有可用的板载 AI 加速（RKNN 或同级）、CSI 和足够 RAM。RISC-V 如进迭时空 K1 也是一个选项，见 §7。
 
 40-pin 或 CM4 座都只保证机械上能接。UART / I²C 落在哪根脚、设备树 overlay、CSI 针脚定义，每家板都要单独核。官方 HAT 标明可驱动 Dynamixel **或 Feetech**，并不等于任意核心板插上就能跑。
 
@@ -291,7 +291,7 @@ Raspberry Pi Compute Module 4 把 SoC、内存、eMMC、无线收成 **55×40 mm
 
 RK3568 对软件几乎可当作「带更多接口的 RK3566」：同一套 RKNN、同一套 MPP。整板开发板通常是 100 mm 级，塞不进头/身体；**CM4 外形的 RK3568 模组**（如 Radxa CM3I）则仍可能装进去，见 §6.2。桌面上先跑通再缩回模组，也说得通。
 
-**K1** 走的是开源 **RISC-V**，不是 Arm。手册把 8 核拆成两个 cluster：cluster 0 四核带 2.0 TOPS AI 扩展，cluster 1 四核是普通核；AI 算力做在 CPU 自定义指令上（厂商称 Daoyi），宣称支持 TensorFlow Lite / ONNX Runtime，**没有** RK3566 那种独立 NPU 和 RKNN 工具链。相对 0.8 TOPS，2.0 TOPS 强得多，视觉头更宽裕；走路策略本身是 ONNX，理论上也可以在 riscv64 的 ORT 上跑，但官方 `aarch64` 发布包、设备树 overlay、MPP/GStreamer 插件都要重做。功耗方面，板厂给出大约 **TDP 3–5 W**、对外介绍典型约 3.5 W，比 Zero 形态的 RK3566 模组更可能偏高，电池和散热要单独核，不默认当「塞进同一只 800 g 鸭子就完事」。
+**K1** 走的是开源 **RISC-V**，不是 Arm。Bianbu Robot 是基于K1的智能机器人软硬件协同解决方案。手册把 8 核拆成两个 cluster：cluster 0 四核带 2.0 TOPS AI 扩展，cluster 1 四核是普通核；AI 算力做在 CPU 自定义指令上（厂商称 Daoyi），宣称支持 TensorFlow Lite / ONNX Runtime，不是像RK3566 那种独立 NPU 和 RKNN 工具链。相对 0.8 TOPS，2.0 TOPS 强得多，视觉头更宽裕；走路策略本身是 ONNX，理论上也可以在 riscv64 的 ORT 上跑，但官方 `aarch64` 发布包、设备树 overlay、MPP/GStreamer 插件都要重做。功耗方面，板厂给出大约 **TDP 3–5 W**、对外介绍典型约 3.5 W，比 Zero 形态的 RK3566 模组更可能偏高，电池和散热要重新评估，不默认当「塞进同一只 800 g 鸭子就完事」。
 
 比 RK3566 更强的 RK3588（6 TOPS 级）能跑，但功耗、价格、散热都超过这只 800 g 机器的需求，不作为默认档。
 
