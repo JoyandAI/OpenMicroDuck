@@ -41,14 +41,30 @@ Zero转接HAT板已经下单打样贴片，等回片后测试。在此期间，�
 | --- | ------------------------------- |
 | 整机  | 25cm / ≤1kg                     |
 | 自由度 | 15（腿 5×2 + 头颈 4 + 鸭嘴 1）         |
-| 舵机  | 15 × Feetech 平替款                |
-| 主控  | RK3566 同级算力平台                   |
+| 舵机  | 15 × **飞特 HD-1910-C001**         |
+| 主控  | **Radxa ZERO 3W**（RK3566）        |
 | 控制  | 50Hz 板载策略环，RL 训练基于 MuJoCo / PPO |
-| 电池  | 18650 可拆卸电池组                    |
+| 电池  | 当前用 NP-F550 复现                  |
 | 结构件 | 3D 打印（FDM / 光固化）＋ 钣金件           |
 
 
 
+
+## 架构规划
+
+软件与 Microduck 同一条回路：离线 PPO 训出 ONNX，板上 **50 Hz** 执行，契约 **观测 61 维 → 动作 14 维**。硬件换成可公开打样的国产件；换舵机必须重训，官方 ONNX 不能当即插即用步态。
+
+![OpenMicroDuck 硬件模块（规划）](docs/diagrams/hw-openmicroduck.svg)
+
+| 模块 | 当前落地 |
+| --- | --- |
+| 计算主控 | Radxa ZERO 3W |
+| 舵机 ×15 | 飞特 HD-1910-C001（TTL 半双工） |
+| 机身 IMU | 自制 `imu_to_ft`，总线从机 ID 200。先用LSM6DSV16X模块 I2C通讯跑通 |
+| 感知 | CSI 相机 + 8×8 ToF；头部 IMU 不进平衡环 |
+| 电源 | Zero HAT 配电；当前用 NP-F550 复现 |
+
+选型对照、舵机连线、进程与控制环见 **[docs/README.md](docs/README.md)**（[架构](docs/architecture.md) · [主控](docs/main_controller.md) · [舵机](docs/servo.md)）。
 
 ## 路线图
 
