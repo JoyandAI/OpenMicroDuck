@@ -61,7 +61,7 @@
     <text x="605.0" y="588.0" text-anchor="middle" font-family="'Microsoft YaHei', '微软雅黑', 'PingFang SC', 'Noto Sans SC', sans-serif" font-size="12" font-weight="400" fill="#1B3A6B">ID 30–34</text>
   <line x1="605" y1="508" x2="605" y2="530" stroke="#4A6A88" stroke-width="1.6" fill="none" marker-start="url(#ao-rev)" marker-end="url(#ao)"/>
   <rect x="730" y="536" width="210" height="78" rx="10" fill="#F3EAF8" stroke="#7A4A9A" stroke-width="1.9"/>
-    <text x="835.0" y="571.0" text-anchor="middle" font-family="'Microsoft YaHei', '微软雅黑', 'PingFang SC', 'Noto Sans SC', sans-serif" font-size="13" font-weight="600" fill="#1B3A6B">机身 imu_to_ft</text>
+    <text x="835.0" y="571.0" text-anchor="middle" font-family="'Microsoft YaHei', '微软雅黑', 'PingFang SC', 'Noto Sans SC', sans-serif" font-size="13" font-weight="600" fill="#1B3A6B">机身 imu_to_servo</text>
     <text x="835.0" y="588.0" text-anchor="middle" font-family="'Microsoft YaHei', '微软雅黑', 'PingFang SC', 'Noto Sans SC', sans-serif" font-size="12" font-weight="400" fill="#1B3A6B">总线从机  ID 200</text>
   <line x1="835" y1="508" x2="835" y2="530" stroke="#4A6A88" stroke-width="1.6" fill="none" marker-start="url(#ao-rev)" marker-end="url(#ao)"/>
   <g font-family="'Microsoft YaHei', '微软雅黑', 'PingFang SC', 'Noto Sans SC', sans-serif" font-size="11" fill="#1B3A6B">
