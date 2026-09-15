@@ -201,7 +201,13 @@ WebRTC 会话可以双向带麦克风和喇叭，用于遥在；本地叫声和�
 机身 IMU      200
 ```
 
-![舵机之间的连接关系](servos_connection.png)
+##### 桌面调试阶段
+桌面调试阶段的硬件连接关系图
+![桌面调试版硬件连接关系](assets/desktop_stage_diagram.png)
+
+##### 整机集成阶段
+整机集成阶段的硬件连接关系图
+![整机集成版舵机之间的连接关系](assets/servos_connection.png)
 
 HAT 需要至少三件事：舵机半双工方向电路、电池配电、I²C/I²S 外设。官方 `[elec_RPI_Robot_HAT](https://github.com/pollen-robotics/elec_RPI_Robot_HAT)` 已开源且标明可驱动 Dynamixel **或 Feetech**（线序可能要改），可作第一版参考，再按 18650 与国产件重画。
 
