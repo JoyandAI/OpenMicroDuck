@@ -374,7 +374,7 @@ hw_diagram(
         ("actuator", ["左腿 ×5", "ID 20–24"]),
         ("actuator", ["右腿 ×5", "ID 10–14"]),
         ("actuator", ["头颈 + 嘴 ×5", "ID 30–34"]),
-        ("model", ["机身 imu_to_ft", "总线从机  ID 200"]),
+        ("model", ["机身 imu_to_servo", "总线从机  ID 200"]),
     ],
     {
         "cam": "CSI 模组（未钉死）",
