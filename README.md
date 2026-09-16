@@ -44,10 +44,12 @@ Zero转接HAT板已经回片，测试中...
 - 第一阶段（桌面调试）：主控和舵机驱动板外置，这样可以由电源适配器供电，主控也可以接显示屏，舵机可由驱动板直接连接PC，方便调试。
 - 第二阶段（整机集成）：Zero HAT板和IMU转接板完成之后，再部署已经调试好的模型和软件，完整塞进机器人内部，形成一台完整的整机。
 
+规格、数量、版本差异与结构件清单见 **[docs/bom.md](docs/bom.md)**。
+
 ### 桌面调试
 | 器件  | 型号 | 规格  | 数量 | 参考单价和链接 |
 | --- | ------------------------------- | --- | --- | --- |
-| 舵机  | **飞特 HD-1910-C001**  | 恒力空心杯舵机，4~8.4V，堵转扭矩 10kg*cm  | 15  | [118](https://item.taobao.com/item.htm?id=1014620157895&mi_id=0000xBjtqiNSYJUq7QGMPpbYwmNEROqnEVZwYJWi5M4hP3Q&skuId=6133422044091&spm=a21n57.shop_search.0.0.18263d65wuqx4I) | 
+| 舵机  | **飞特 HD-1910-C001**  | 恒力空心杯舵机，4~8.4V，堵转扭矩 12kg·cm  | 15  | [118](https://item.taobao.com/item.htm?id=1014620157895&mi_id=0000xBjtqiNSYJUq7QGMPpbYwmNEROqnEVZwYJWi5M4hP3Q&skuId=6133422044091&spm=a21n57.shop_search.0.0.18263d65wuqx4I) |
 | 主控  | **Radxa ZERO 3W** | RK3566, 2GB RAM，带WiFi, 无eMMC板, 带排针版 | 1 |   [309](https://item.taobao.com/item.htm?id=763812025816&mi_id=0000uT5x0cTXxWeiB08JXVyTWI8UsD7hlB5D9f1engmhabY&spm=tbpc.boughtlist.suborder_itemtitle.1.2b562e8dNOWpmj&skuId=6066053424678)    |
 | SD卡  | MicroSD/TF卡 | 64GB, A2 | 1 | ~100 |
 | IMU模组  | LSM6DSV16X模块 | 支持I2C和SPI接口 | 1 | 51 |
@@ -65,12 +67,12 @@ Zero转接HAT板已经回片，测试中...
 ### 整机集成
 | 器件  | 型号 | 规格  | 数量 | 参考单价和链接 |
 | --- | ------------------------------- | --- | --- | --- |
-| 舵机  | **飞特 HD-1910-C001**  | 恒力空心杯舵机，4~8.4V，堵转扭矩 10kg*cm  | 15  | [118](https://item.taobao.com/item.htm?id=1014620157895&mi_id=0000xBjtqiNSYJUq7QGMPpbYwmNEROqnEVZwYJWi5M4hP3Q&skuId=6133422044091&spm=a21n57.shop_search.0.0.18263d65wuqx4I) | 
+| 舵机  | **飞特 HD-1910-C001**  | 恒力空心杯舵机，4~8.4V，堵转扭矩 12kg·cm  | 15  | [118](https://item.taobao.com/item.htm?id=1014620157895&mi_id=0000xBjtqiNSYJUq7QGMPpbYwmNEROqnEVZwYJWi5M4hP3Q&skuId=6133422044091&spm=a21n57.shop_search.0.0.18263d65wuqx4I) |
 | 主控  | **Radxa ZERO 3W** | RK3566, 2GB RAM，带WiFi, 无eMMC板, 带排针版 | 1 |   [309](https://item.taobao.com/item.htm?id=763812025816&mi_id=0000uT5x0cTXxWeiB08JXVyTWI8UsD7hlB5D9f1engmhabY&spm=tbpc.boughtlist.suborder_itemtitle.1.2b562e8dNOWpmj&skuId=6066053424678)    |
 | SD卡  | MicroSD/TF卡 | 64GB, A2 | 1 | ~110 |
 | Zero Robot HAT转接板  |  |  | |  |
 | IMU_to_servo转接板  | LSM6DSV16X模块 |  | |  |
-| 摄像头模组 | IMX219带FPC排线 | 500万像素 | | 1 |  |
+| 摄像头模组 | IMX219带FPC排线 | 500万像素 | 1 |  |
 | 结构件 | PLA[+TPU] FDM 3D打印 | 有条件的话，脚垫可选用TPU打印。 | 1 | - |
 | 轴承 | 6700K | 10 * 15 * 3 | 3 | [1](https://item.taobao.com/item.htm?id=576923148723&skuId=6137219048846) |
 | 轴承 | ET2216 | 16 * 22 * 4| 1 | [2.7](https://item.taobao.com/item.htm?id=576923148723&skuId=6137219048846) |
