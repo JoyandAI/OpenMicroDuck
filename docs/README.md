@@ -8,6 +8,7 @@
 | 架构  | 几何与控制契约对齐 Microduck；供应链换成可公开打样的国产件        | [architecture.md](architecture.md)       |
 | 主控  | **Radxa ZERO 3W**（RK3566，≥1 GB，有 eMMC 更好） | [main_controller.md](main_controller.md) |
 | 舵机  | **飞特 HD-1910-C001** × 15                  | [servo.md](servo.md)                     |
+| BOM | 桌面调试版 / 整机集成版器件清单；结构螺丝与 3D 打印件           | [bom.md](bom.md)                         |
 
 
 条目索引与外部链接见 [reference.md](reference.md)。
@@ -48,7 +49,7 @@
 | 机身 IMU   | 自制 `imu_to_servo`，挂在舵机总线上，从机 ID 200       |
 | 头部 IMU   | I²C 辅助模组，**不进** 50 Hz 平衡环                 |
 | 相机 / ToF | CSI 模组 + 8×8 DToF（I²C）                    |
-| 电池       | 当前用NP-F550复现                              |
+| 电池       | 当前用2S 18650电池组7.4V复现                              |
 
 
 换舵机或改质量分布之后，官方 ONNX **不能当即插即用步态**；要在 `microduck_rl` 里按新执行器重训，并保持 `obs[61] → act[14]`。
@@ -73,7 +74,7 @@
 | 尺寸      | 65 mm × 30 mm（Pi Zero 同外形）                             |
 | SoC     | RK3566，四核 A55 @ 最高 1.6 GHz                             |
 | AI      | NPU 0.8 TOPS（INT8）；走路不用，视觉检测用                          |
-| 内存 / 存储 | 1–8 GB LPDDR4；可选 eMMC + microSD                        |
+| 内存 / 存储 | 1–8 GB LPDDR4；可选 eMMC 或 microSD                        |
 | 无线      | Wi-Fi 6 + BT 5.4                                       |
 | 和鸭子相关的口 | UART2 → 舵机总线；I²C3 → ToF / codec；MIPI CSI → 相机；I²S → 喇叭 |
 
@@ -97,13 +98,13 @@ Microduck 运行时按 Dynamixel XL330-M288-T 说话。HD-1910-C001 是飞特为
 
 | 项目    | HD-1910-C001（当前选择）             | XL330-M288-T（官方基线）           |
 | ----- | ------------------------------ | ---------------------------- |
-| 重量    | 22.5 ± 2 g                     | 18 g                         |
+| 重量    | 21 ± 2 g                     | 18 g                         |
 | 尺寸 mm | 34 × 20 × 23                   | 20 × 34 × 26                 |
-| 堵转扭矩  | 10 kg·cm（0.98 N·m）             | 0.52 N·m @ 5 V               |
+| 堵转扭矩  | 12 kg·cm @6V（1.18 N·m）      | 0.52 N·m @ 5 V               |
 | 额定扭矩  | 3.0 kg·cm（0.29 N·m）            | 未给                           |
 | 空载转速  | 110 rpm                        | 103 rpm @ 5 V                |
-| 供电    | **5–8.4 V**                    | 3.7–6.0 V（推荐 5 V）            |
-| 接口    | AMP-3：1 GND / 2 Vcc / 3 Signal | JST 3P TTL                   |
+| 供电    | **4–8.4 V**                    | 3.7–6.0 V（推荐 5 V）            |
+| 接口    | AMP2.0-3P                      | JST 3P TTL                   |
 | 协议    | 飞特 TTL 半双工                     | Dynamixel 2.0                |
 | 反馈    | 负载 / 位置 / 速度 / 电压 / 电流 / 温度    | 位置 / 速度 / 电流 / PWM / 电压 / 温度 |
 

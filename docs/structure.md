@@ -9,7 +9,7 @@
 - 使用 Bambu Studio 直接打印已经摆盘好的 `cad/openmicroduck.3mf` 即可。
 - 装配参考文件：`cad/openmicroduck-assembly-opt.stl`。
 - 散件文件：`cad/psrts`。
-- 结构件 BOM 表：[bom.md](bom.md)
+- BOM 表（含结构件与电器件）：[bom.md](bom.md)
 
 ## 结构差异（舵机）
 
