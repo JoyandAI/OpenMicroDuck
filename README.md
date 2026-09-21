@@ -55,8 +55,8 @@ Zero转接HAT板已经回片，测试中...
 | IMU模组  | LSM6DSV16X模块 | 支持I2C和SPI接口 | 1 | 51 |
 | 摄像头模组 | IMX219摄像头模组 | MIPI FPC排线，500万像素 |  1 |  |
 | 结构件 | PLA[+TPU] FDM 3D打印 | 有条件的话，脚垫可选用TPU打印 | 1 | - |
-| 轴承 | 6700K | 10 * 15 * 3 | 3 | [1](https://item.taobao.com/item.htm?id=576923148723&skuId=6137219048846) |
-| 轴承 | ET2216 | 16 * 22 * 4| 1 | [2.7](https://item.taobao.com/item.htm?id=576923148723&skuId=6137219048846) |
+| 轴承 | 6700K | 10 x 15 x 3 | 3 | [2](https://item.taobao.com/item.htm?id=1084278550250&mi_id=0000IFo09JQwrF2qO5b7uhalH5jN7IxahG44rLmmvDEeCC8&skuId=6303412790720&spm=a21xtw.29978518.0.0&xxc=shop) |
+| 轴承 | ET2216 | 16 x 22 x 4| 1 | [3.5](https://item.taobao.com/item.htm?id=1084278550250&mi_id=0000IFo09JQwrF2qO5b7uhalH5jN7IxahG44rLmmvDEeCC8&skuId=6303412790721&spm=a21xtw.29978518.0.0&xxc=shop) |
 | 紧固件 | 螺丝 | M2自攻 | 若干 | |
 | 电线 | 特软硅胶线、铁氟龙线 | 30cm | 若干 | |
 | 舵机转接线 | | PH2.0转5264 3P转接线（调试用），先用1根PH2.0 3P接驳1根5264 3P线 | 1 | - |
@@ -74,8 +74,8 @@ Zero转接HAT板已经回片，测试中...
 | IMU_to_servo转接板  | LSM6DSV16X模块 |  | |  |
 | 摄像头模组 | IMX219带FPC排线 | 500万像素 | 1 |  |
 | 结构件 | PLA[+TPU] FDM 3D打印 | 有条件的话，脚垫可选用TPU打印。 | 1 | - |
-| 轴承 | 6700K | 10 * 15 * 3 | 3 | [1](https://item.taobao.com/item.htm?id=576923148723&skuId=6137219048846) |
-| 轴承 | ET2216 | 16 * 22 * 4| 1 | [2.7](https://item.taobao.com/item.htm?id=576923148723&skuId=6137219048846) |
+| 轴承 | 6700K | 10 x 15 x 3 | 3 | [2](https://item.taobao.com/item.htm?id=1084278550250&mi_id=0000IFo09JQwrF2qO5b7uhalH5jN7IxahG44rLmmvDEeCC8&skuId=6303412790720&spm=a21xtw.29978518.0.0&xxc=shop) |
+| 轴承 | ET2216 | 16 x 22 x 4| 1 | [3.5](https://item.taobao.com/item.htm?id=1084278550250&mi_id=0000IFo09JQwrF2qO5b7uhalH5jN7IxahG44rLmmvDEeCC8&skuId=6303412790721&spm=a21xtw.29978518.0.0&xxc=shop) |
 | 紧固件 | 螺丝 | M2自攻 | 若干 | |
 | 麦克风 | | | | |
 | 扬声器 | | | | |
