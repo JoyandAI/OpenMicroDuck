@@ -52,7 +52,7 @@ Zero转接HAT板已经回片，测试中...
 | 舵机  | **飞特 HD-1910-C001**  | 恒力空心杯舵机，4~8.4V，堵转扭矩 12kg·cm  | 15  | [118](https://item.taobao.com/item.htm?id=1014620157895&mi_id=0000xBjtqiNSYJUq7QGMPpbYwmNEROqnEVZwYJWi5M4hP3Q&skuId=6133422044091&spm=a21n57.shop_search.0.0.18263d65wuqx4I) |
 | 主控  | **Radxa ZERO 3W** | RK3566, 2GB RAM，带WiFi, 无eMMC板, 带排针版 | 1 |   [309](https://item.taobao.com/item.htm?id=763812025816&mi_id=0000uT5x0cTXxWeiB08JXVyTWI8UsD7hlB5D9f1engmhabY&spm=tbpc.boughtlist.suborder_itemtitle.1.2b562e8dNOWpmj&skuId=6066053424678)    |
 | SD卡  | MicroSD/TF卡 | 64GB, A2 | 1 | ~100 |
-| IMU模组  | LSM6DSV16X模块 | 支持I2C和SPI接口 | 1 | 51 |
+| IMU模组  | LSM6DSV16X模块 | 支持I2C和SPI接口 | 1 | [49](https://item.taobao.com/item.htm?id=1083871166103&mi_id=0000-7V5F0osZmPFW7TvAOGyawUUGu6qnGuEgWHxF6L08vg&spm=a21xtw.29178619.0.0&xxc=shop) |
 | 摄像头模组 | IMX219摄像头模组 | MIPI FPC排线，500万像素 |  1 |  |
 | 结构件 | PLA[+TPU] FDM 3D打印 | 有条件的话，脚垫可选用TPU打印 | 1 | - |
 | 轴承 | 6700K | 10 x 15 x 3 | 3 | [2](https://item.taobao.com/item.htm?id=1084278550250&mi_id=0000IFo09JQwrF2qO5b7uhalH5jN7IxahG44rLmmvDEeCC8&skuId=6303412790720&spm=a21xtw.29978518.0.0&xxc=shop) |
