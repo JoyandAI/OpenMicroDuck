@@ -30,7 +30,9 @@ Zero转接HAT板已经回片，测试中...
 
 ## 交流群
 
-![](./assets/wechat_group_qrcode.jpg)
+<p align="center">
+  <img src="./assets/wechat_group_qrcode.jpg" alt="交流群二维码" width="50%" />
+</p>
 
 ## BOM
 
