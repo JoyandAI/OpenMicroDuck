@@ -16,17 +16,15 @@ OpenMicroDuck 是一个**完全开源**的双足机器人平台：一只 25cm �
 
 ## 当前进展
 
-飞特 HD-1910 的 BAM 执行器参数已更新到我们 fork 的 [microduck_rl](https://github.com/JoyandAI/microduck_rl)（`develop` 分支），可直接查看 [hd1910 参数目录](https://github.com/JoyandAI/microduck_rl/tree/develop/vendor/bam/bam/params/hd1910)。
+飞特 HD-1910 的 BAM 执行器参数，参考陆吾智能按 STS3215 执行器标定的M6参数。在仿真强化学习项目 [microduck_rl](https://github.com/JoyandAI/microduck_rl/tree/develop/vendor/bam/bam/params/hd1910) 中已经更新。
 
 ### 最新视频
 
-[国产方案调通啦 — MicroDuck 复刻·第三话](https://www.bilibili.com/video/BV1GdYC68Enz/)
+[OpenMicroDuck-展示一下国庆训练效果](https://www.bilibili.com/video/BV1hHHX6sEhS/)
 
 飞特 HD-1910 已经调通基本流程，更多动作和流畅控制进一步调校中
 
-![国产方案调通啦-MicroDuck复刻-第三话](./assets/bilibili_BV1GdYC68Enz.jpg)
-
-Zero转接HAT板已经回片，测试中...
+![OpenMicroDuck-展示一下国庆训练效果](./assets/bilibili_BV1hHHX6sEhS.jpg)
 
 ## 交流群
 
@@ -47,46 +45,46 @@ Zero转接HAT板已经回片，测试中...
 ### 桌面调试
 
 
-| 器件    | 型号                  | 规格                                             | 数量  | 参考单价和链接                                                                                                                                                                                   |
-| ----- | ------------------- | ---------------------------------------------- | --- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 舵机    | **飞特 HD-1910-C001** | 恒力空心杯舵机，4~8.4V，堵转扭矩 12kg·cm                    | 15  | [118](https://item.taobao.com/item.htm?id=1014620157895&mi_id=0000xBjtqiNSYJUq7QGMPpbYwmNEROqnEVZwYJWi5M4hP3Q&skuId=6133422044091&spm=a21n57.shop_search.0.0.18263d65wuqx4I)              |
-| 主控    | **Radxa ZERO 3W**   | RK3566, 2GB RAM，带WiFi, 无eMMC板, 带排针版            | 1   | [309](https://item.taobao.com/item.htm?id=763812025816&mi_id=0000uT5x0cTXxWeiB08JXVyTWI8UsD7hlB5D9f1engmhabY&spm=tbpc.boughtlist.suborder_itemtitle.1.2b562e8dNOWpmj&skuId=6066053424678) |
-| SD卡   | MicroSD/TF卡         | 64GB, A2                                       | 1   | ~100                                                                                                                                                                                      |
-| IMU模组 | LSM6DSV16X模块        | 支持I2C和SPI接口                                    | 1   | [49](https://item.taobao.com/item.htm?id=1083871166103&mi_id=0000-7V5F0osZmPFW7TvAOGyawUUGu6qnGuEgWHxF6L08vg&spm=a21xtw.29178619.0.0&xxc=shop)                                            |
-| 摄像头模组 | IMX219摄像头模组         | MIPI FPC排线，500万像素                              | 1   |                                                                                                                                                                                           |
-| 结构件   | PLA[+TPU] FDM 3D打印  | 有条件的话，脚垫可选用TPU打印                               | 1   | -                                                                                                                                                                                         |
-| 轴承    | 6700K               | 10 x 15 x 3                                    | 3   | [2](https://item.taobao.com/item.htm?id=1084278550250&mi_id=0000IFo09JQwrF2qO5b7uhalH5jN7IxahG44rLmmvDEeCC8&skuId=6303412790720&spm=a21xtw.29978518.0.0&xxc=shop)                         |
-| 轴承    | ET2216              | 16 x 22 x 4                                    | 1   | [3.5](https://item.taobao.com/item.htm?id=1084278550250&mi_id=0000IFo09JQwrF2qO5b7uhalH5jN7IxahG44rLmmvDEeCC8&skuId=6303412790721&spm=a21xtw.29978518.0.0&xxc=shop)                       |
-| 紧固件   | 螺丝                  | M2自攻                                           | 若干  |                                                                                                                                                                                           |
-| 电线    | 特软硅胶线、铁氟龙线          | 30cm                                           | 若干  |                                                                                                                                                                                           |
-| 舵机转接线 |                     | PH2.0转5264 3P转接线（调试用），先用1根PH2.0 3P接驳1根5264 3P线 | 1   | -                                                                                                                                                                                         |
-| 麦克风   |                     |                                                | 2   |                                                                                                                                                                                           |
-| 扬声器   |                     |                                                | 1   |                                                                                                                                                                                           |
-| 电池(配重)     | 7.4V 3400mAh 2S 锂电池组 | 18650 2串，放电倍率2C，XH2.54 2P公头         | 1   |  [35.8](https://item.taobao.com/item.htm?id=900301752962&mi_id=0000_n5QaunwDQLCJKEVtIDqFgYKVqH1Y8JD_aPWZ-tEzRA&skuId=5922929891250&spm=tbpc.boughtlist.suborder_itemtitle.1.716f2e8d2TbU6f) |
+| 器件     | 型号                   | 规格                                             | 数量   | 参考单价和链接                                                                                                                                                                                    |
+| ------ | -------------------- | ---------------------------------------------- | ---- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| 舵机     | **飞特 HD-1910-C001**  | 恒力空心杯舵机，4~8.4V，堵转扭矩 12kg·cm                    | 15   | [118](https://item.taobao.com/item.htm?id=1014620157895&mi_id=0000xBjtqiNSYJUq7QGMPpbYwmNEROqnEVZwYJWi5M4hP3Q&skuId=6133422044091&spm=a21n57.shop_search.0.0.18263d65wuqx4I)               |
+| 主控     | **Radxa ZERO 3W**    | RK3566, 2GB RAM，带WiFi, 无eMMC板, 带排针版            | 1    | [309](https://item.taobao.com/item.htm?id=763812025816&mi_id=0000uT5x0cTXxWeiB08JXVyTWI8UsD7hlB5D9f1engmhabY&spm=tbpc.boughtlist.suborder_itemtitle.1.2b562e8dNOWpmj&skuId=6066053424678)  |
+| SD卡    | MicroSD/TF卡          | 64GB, A2                                       | 1    | ~100                                                                                                                                                                                       |
+| IMU模组  | LSM6DSV16X模块         | 支持I2C和SPI接口                                    | 1    | [49](https://item.taobao.com/item.htm?id=1083871166103&mi_id=0000-7V5F0osZmPFW7TvAOGyawUUGu6qnGuEgWHxF6L08vg&spm=a21xtw.29178619.0.0&xxc=shop)                                             |
+| 摄像头模组  | IMX219摄像头模组          | MIPI FPC排线，500万像素                              | 1    |                                                                                                                                                                                            |
+| 结构件    | PLA[+TPU] FDM 3D打印   | 有条件的话，脚垫可选用TPU打印                               | 1    | -                                                                                                                                                                                          |
+| 轴承     | 6700K                | 10 x 15 x 3                                    | 3    | [2](https://item.taobao.com/item.htm?id=1084278550250&mi_id=0000IFo09JQwrF2qO5b7uhalH5jN7IxahG44rLmmvDEeCC8&skuId=6303412790720&spm=a21xtw.29978518.0.0&xxc=shop)                          |
+| 轴承     | ET2216               | 16 x 22 x 4                                    | 11 * | [3.5](https://item.taobao.com/item.htm?id=1084278550250&mi_id=0000IFo09JQwrF2qO5b7uhalH5jN7IxahG44rLmmvDEeCC8&skuId=6303412790721&spm=a21xtw.29978518.0.0&xxc=shop)                        |
+| 紧固件    | 螺丝                   | M2自攻                                           | 若干   |                                                                                                                                                                                            |
+| 电线     | 特软硅胶线                | 30cm                                           | 若干   |                                                                                                                                                                                            |
+| 舵机转接线  |                      | PH2.0转5264 3P转接线（调试用），先用1根PH2.0 3P接驳1根5264 3P线 | 1    | -                                                                                                                                                                                          |
+| 麦克风    |                      |                                                | 2    |                                                                                                                                                                                            |
+| 扬声器    |                      |                                                | 1    |                                                                                                                                                                                            |
+| 电池(配重) | 7.4V 3400mAh 2S 锂电池组 | 18650 2串，放电倍率2C，XH2.54 2P公头                    | 1    | [35.8](https://item.taobao.com/item.htm?id=900301752962&mi_id=0000_n5QaunwDQLCJKEVtIDqFgYKVqH1Y8JD_aPWZ-tEzRA&skuId=5922929891250&spm=tbpc.boughtlist.suborder_itemtitle.1.716f2e8d2TbU6f) |
 
 
-
+\* ET2216 按真正承重、并降低摩擦的关节计 11 只。另外 10 处关节留了轴承位，但没有起到支撑旋转、降低摩擦的作用。若打印件沿用 Pollen 原版结构，并要和原版 Microduck 的结构仿真对齐，可按一整套 14 只轴承采购。
 
 ### 整机集成
 
 
-| 器件                | 型号                   | 规格                                  | 数量  | 参考单价和链接                                                                                                                                                                                   |
-| ----------------- | -------------------- | ----------------------------------- | --- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 舵机                | **飞特 HD-1910-C001**  | 恒力空心杯舵机，4~8.4V，堵转扭矩 12kg·cm         | 15  | [118](https://item.taobao.com/item.htm?id=1014620157895&mi_id=0000xBjtqiNSYJUq7QGMPpbYwmNEROqnEVZwYJWi5M4hP3Q&skuId=6133422044091&spm=a21n57.shop_search.0.0.18263d65wuqx4I)              |
-| 主控                | **Radxa ZERO 3W**    | RK3566, 2GB RAM，带WiFi, 无eMMC板, 带排针版 | 1   | [309](https://item.taobao.com/item.htm?id=763812025816&mi_id=0000uT5x0cTXxWeiB08JXVyTWI8UsD7hlB5D9f1engmhabY&spm=tbpc.boughtlist.suborder_itemtitle.1.2b562e8dNOWpmj&skuId=6066053424678) |
-| SD卡               | MicroSD/TF卡          | 64GB, A2                            | 1   | ~110                                                                                                                                                                                      |
-| Zero Robot HAT转接板 |                      |                                     | 1   |                                                                                                                                                                                           |
-| IMU_to_servo转接板   |                      | LSM6DSV16X，带AMP3P-2.0插口             | 1   |                                                                                                                                                                                           |
-| 摄像头模组             | IMX219带FPC排线         | 500万像素                              | 1   |                                                                                                                                                                                           |
-| 结构件               | PLA[+TPU] FDM 3D打印   | 有条件的话，脚垫可选用TPU打印。                   | 1   | -                                                                                                                                                                                         |
-| 轴承                | 6700K                | 10 x 15 x 3                         | 3   | [2](https://item.taobao.com/item.htm?id=1084278550250&mi_id=0000IFo09JQwrF2qO5b7uhalH5jN7IxahG44rLmmvDEeCC8&skuId=6303412790720&spm=a21xtw.29978518.0.0&xxc=shop)                         |
-| 轴承                | ET2216               | 16 x 22 x 4                         | 1   | [3.5](https://item.taobao.com/item.htm?id=1084278550250&mi_id=0000IFo09JQwrF2qO5b7uhalH5jN7IxahG44rLmmvDEeCC8&skuId=6303412790721&spm=a21xtw.29978518.0.0&xxc=shop)                       |
-| 紧固件               | 螺丝                   | M2自攻                                | 若干  |                                                                                                                                                                                           |
-| 麦克风               |                      |                                     | 2   |                                                                                                                                                                                           |
-| 扬声器               |                      |                                     | 1   |                                                                                                                                                                                           |
-| 电池                | 7.4V 3400mAh 2S 锂电池组 | 18650 2串，放电倍率2C，XH2.54 2P公头         | 1   |  [35.8](https://item.taobao.com/item.htm?id=900301752962&mi_id=0000_n5QaunwDQLCJKEVtIDqFgYKVqH1Y8JD_aPWZ-tEzRA&skuId=5922929891250&spm=tbpc.boughtlist.suborder_itemtitle.1.716f2e8d2TbU6f) |
+| 器件                | 型号                   | 规格                                  | 数量  | 参考单价和链接                                                                                                                                                                                    |
+| ----------------- | -------------------- | ----------------------------------- | --- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| 舵机                | **飞特 HD-1910-C001**  | 恒力空心杯舵机，4~8.4V，堵转扭矩 12kg·cm         | 15  | [118](https://item.taobao.com/item.htm?id=1014620157895&mi_id=0000xBjtqiNSYJUq7QGMPpbYwmNEROqnEVZwYJWi5M4hP3Q&skuId=6133422044091&spm=a21n57.shop_search.0.0.18263d65wuqx4I)               |
+| 主控                | **Radxa ZERO 3W**    | RK3566, 2GB RAM，带WiFi, 无eMMC板, 带排针版 | 1   | [309](https://item.taobao.com/item.htm?id=763812025816&mi_id=0000uT5x0cTXxWeiB08JXVyTWI8UsD7hlB5D9f1engmhabY&spm=tbpc.boughtlist.suborder_itemtitle.1.2b562e8dNOWpmj&skuId=6066053424678)  |
+| SD卡               | MicroSD/TF卡          | 64GB, A2                            | 1   | ~110                                                                                                                                                                                       |
+| Zero Robot HAT转接板 |                      |                                     | 1   |                                                                                                                                                                                            |
+| IMU_to_servo转接板   |                      | LSM6DSV16X，带AMP2.0-3P插口             | 1   |                                                                                                                                                                                            |
+| 摄像头模组             | IMX219带FPC排线         | 500万像素                              | 1   |                                                                                                                                                                                            |
+| 结构件               | PLA[+TPU] FDM 3D打印   | 有条件的话，脚垫可选用TPU打印。                   | 1   | -                                                                                                                                                                                          |
+| 轴承                | 6700K                | 10 x 15 x 3                         | 3   | [2](https://item.taobao.com/item.htm?id=1084278550250&mi_id=0000IFo09JQwrF2qO5b7uhalH5jN7IxahG44rLmmvDEeCC8&skuId=6303412790720&spm=a21xtw.29978518.0.0&xxc=shop)                          |
+| 轴承                | ET2216               | 16 x 22 x 4                         | 11 * | [3.5](https://item.taobao.com/item.htm?id=1084278550250&mi_id=0000IFo09JQwrF2qO5b7uhalH5jN7IxahG44rLmmvDEeCC8&skuId=6303412790721&spm=a21xtw.29978518.0.0&xxc=shop)                        |
+| 紧固件               | 螺丝                   | M2自攻                                | 若干  |                                                                                                                                                                                            |
+| 麦克风               |                      |                                     | 2   |                                                                                                                                                                                            |
+| 扬声器               |                      |                                     | 1   |                                                                                                                                                                                            |
+| 电池                | 7.4V 3400mAh 2S 锂电池组 | 18650 2串，放电倍率2C，XH2.54 2P公头         | 1   | [35.8](https://item.taobao.com/item.htm?id=900301752962&mi_id=0000_n5QaunwDQLCJKEVtIDqFgYKVqH1Y8JD_aPWZ-tEzRA&skuId=5922929891250&spm=tbpc.boughtlist.suborder_itemtitle.1.716f2e8d2TbU6f) |
 
-
+\* ET2216 按真正承重、并降低摩擦的关节计 11 只。另外 10 处关节留了轴承位，但没有起到支撑旋转、降低摩擦的作用。若打印件沿用 Pollen 原版结构，并要和原版 Microduck 的结构仿真对齐，可按一整套 14 只轴承采购。
 
 
 ### 研发辅助材料
@@ -97,7 +95,7 @@ Zero转接HAT板已经回片，测试中...
 | 器件         | 型号                         | 规格                               | 数量  | 参考单价和链接 |
 | ---------- | -------------------------- | -------------------------------- | --- | ------- |
 | 舵机驱动板      | 飞特 URT2串口总线舵机驱动板           | TypeC接口                          | 1   |         |
-| 舵机电源适配器    | 7.5V舵机电源适配器                | 7.5V3A，DC5.5*2.1插头，3C认证          | 1   | -       |
+| 舵机电源适配器    | 7.5V舵机电源适配器                | 7.5V6A，DC5.5*2.1插头，3C认证          | 1   | -       |
 | 主控电源适配器    | PD直流电源适配器                  | 用TypeC口的PD电源适配器就可以，确认支持5V3A或5V2A | 1   | -       |
 | 数据线        | USB TypeC->TypeA 或 双头TypeC | 0.5m~1.5m                        | 1   |         |
 | MicroHDMI线 | MicroHDMI->HDMI线           | ~1.5m                            | 1   |         |
