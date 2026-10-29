@@ -1,0 +1,6 @@
+# policies 下的文本文件统一用 LF，Windows 检出时也不转成 CRLF
+* text=auto eol=lf
+
+# 模型权重是二进制，不做任何换行转换
+*.onnx binary
+*.pt binary
