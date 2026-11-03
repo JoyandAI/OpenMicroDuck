@@ -1,6 +1,6 @@
 # OpenMD policies（HD-1910 / robotd 部署用）
 
-这个目录是 OpenMD 稳定版策略的**可携带副本**：6 个可部署的 ONNX + 一份把索引路径改到本目录的部署参数 JSON。训练 checkpoint（`.pt`）不随本目录分发，这里只放部署要用的 ONNX。
+这个目录是 OpenMD ：6 个可部署的 ONNX + 一份把索引路径改到本目录的部署参数 JSON。
 
 - 策略索引与部署参数：`OpenMD_policy_settings_20261028.json`
 - 命名规则：`OpenMD_<角色>.onnx`，角色沿用原 JSON 的键。
@@ -17,7 +17,7 @@
 | roulade | `OpenMD_roulade.onnx` | 793717 | `3c54f3b3111c` |
 | sitstand | `OpenMD_sitstand.onnx` | 793794 | `7356e318a7ee` |
 
-六个 ONNX 的 sha256 与原始 `OpenMD_policy_settings_20261028.json` 里 `models.*.onnx_sha256` **逐字节一致**，即搬过来的就是当时部署的那一份。
+六个 ONNX 的 sha256 与原始 `OpenMD_policy_settings_20261028.json` 里 `models.*.onnx_sha256` **逐字节一致**。
 
 
 
@@ -27,11 +27,11 @@
 
 这样配的原因是现阶段 velstand 单独承担走路还不够好，这一路仍在优化中；用 walk 管行走、velstand 管站立的分工，实际效果更好。等后续 velstand 训练到能独立覆盖行走，直接把 velstand 放到 walk 槽、stand 槽置为 none 即可，其余参数不用动。
 
-## sitstand：trial-sitstand-14999（model_14999）
+## sitstand
 
-本次把 sitstand 一并放进来了，对应板端 `/opt/robot/policies/trials/trial-sitstand-14999_20261027T1310/model_14999.onnx`（迭代 14999，793794 字节，sha256 `7356e318a7ee…`），在本目录里就是 `OpenMD_sitstand.onnx`；JSON 里 `policy.sitstand` 与 `models.sitstand` 都已指向它，不再是 `"none"` / `null`。
+这次增加了 sitstand （2026/11/3）：`OpenMD_sitstand.onnx`（793794 字节，sha256 `7356e318a7ee…`）。JSON 里 `policy.sitstand` 与 `models.sitstand` 都已指向它，不再是 `"none"` / `null`。
 
-动作缩放固定 1.0：robotd 0.13.3 的控制代码把 sitstand 的缩放写死成 1.0，`standing_action_scale` 对它不起作用。触发 sitstand 的按键不在本目录 —— 按键映射在 `padd` 二进制里，没有可编辑的映射配置。
+动作缩放固定 1.0：robotd 0.13.3 的控制代码把 sitstand 的缩放写死成 1.0，`standing_action_scale` 对它不起作用。触发 sitstand 的按键不在本目录 —— 按键映射在 `padd` 二进制里，没有可编辑的映射配置。tips：上机测试时出现过歪头（sitstand的一个启动姿势）但没坐下的情况，一般是因为重心靠前问题；稍微给一点向后行走的惯性就能坐下。
 
 ## 部署参数（`policy.resolved`，robotd 0.13.3）
 
@@ -48,7 +48,7 @@
 | `roulade_duration` | 1.0 s | |
 | `kick_duration` | 0.5 s | 未设 → 0.5 |
 | `limp_fall` | false | 不做自动跌倒恢复 |
-| `sitstand` | `OpenMD_sitstand.onnx` | trial-sitstand-14999（model_14999）；动作缩放固定 1.0 |
+| `sitstand` | `OpenMD_sitstand.onnx` | 动作缩放固定 1.0 |
 | `kick_left` | none | 只有右踢 |
 
 HOME 帧（`policy.home_deg`）：neck_pitch/head_pitch 20°，hip_roll −5/+5°，hip_pitch −26.2/+26.2°，ankle +26/−26°，knee 0°。列表有 15 项，因为板端配置还包含 `mouth` 关节；按原样保留，未做删改。

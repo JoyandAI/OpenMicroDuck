@@ -91,11 +91,11 @@
             "onnx_sha256": "7356e318a7ee42ed3076b092128f340f75f15e44b5828a15a7c3c21035013ca5",
             "checkpoint_bytes": null,
             "checkpoint_sha256": null,
-            "checkpoint_iteration": 14999,
-            "weights_verified": "no local checkpoint: only the ONNX from trial-sitstand-14999 was carried over. ONNX only, by decision.",
-            "source": "trial-sitstand-14999 (model_14999)",
-            "run_path": "n/a (ONNX carried from the board trial dir)",
-            "board_path": "/opt/robot/policies/trials/trial-sitstand-14999_20261027T1310/model_14999.onnx"
+            "checkpoint_iteration": null,
+            "weights_verified": "no local checkpoint shipped: ONNX only, by decision.",
+            "source": "stable sitstand",
+            "run_path": null,
+            "board_path": null
         },
         "ground_pick": {
             "local": "OpenMD_ground_pick.onnx",
@@ -140,7 +140,7 @@
     },
     "notes": [
         "Paths in this file are relative to the JSON's own folder (policies/). Original board-side paths are kept per model under models.*.board_path for reference only.",
-        "sitstand ships as OpenMD_sitstand.onnx (trial-sitstand-14999 / model_14999, iter 14999, sha256 7356e318a7ee...), taken from board /opt/robot/policies/trials/trial-sitstand-14999_20261027T1310/model_14999.onnx. Its action scale is fixed at 1.0 in the 0.13.3 control code; standing_action_scale does not change it.",
+        "sitstand ships as OpenMD_sitstand.onnx (sha256 7356e318a7ee...). Its action scale is fixed at 1.0 in the 0.13.3 control code; standing_action_scale does not change it.",
         "action_scale=0.7 is the walk/default net scale; standing_action_scale=1.0 is the stand net scale. robotd 0.13.3 has no walk_action_scale key.",
         "stand=OpenMD_stand.onnx (model_17500) and stand_on_zero_command=true: zero twist selects stand; nonzero twist selects walk m9999.",
         "kick_left=none; kick_right/roulade are stable-aux; roulade_duration=1.0 s.",
