@@ -23,7 +23,6 @@ OpenMicroDuck 是一个**完全开源**的双足机器人平台：一只 25cm �
 [OpenMicroduck--试一下我新的“鞋子”](https://www.bilibili.com/video/BV1bcxh6PE4x/)
 ![OpenMicroduck--试一下我新的“鞋子”](./assets/bilibili_BV1bcxh6PE4x.jpg)
 
-
 [OpenMicroDuck-展示一下国庆训练效果](https://www.bilibili.com/video/BV1hHHX6sEhS/)
 
 ![OpenMicroDuck-展示一下国庆训练效果](./assets/bilibili_BV1hHHX6sEhS.jpg)
@@ -42,7 +41,7 @@ OpenMicroDuck 是一个**完全开源**的双足机器人平台：一只 25cm �
 
 适配 Radxa Zero 3W，已经安装 microduck 运行时程序的系统我们已经压缩打包成镜像，希望可以节省大家配置环境的时间。
 
-镜像路径：[openmicroduck_joyandai.img.xz](https://pan.baidu.com/s/1fFFMAOTGGKsb7kdiIsmPMQ?pwd=i1dy)
+镜像路径：[Openmicroduck Radxa Zero 3W镜像](https://pan.baidu.com/s/15vAhpStkQ0C7q6i9n2H0tQ?pwd=7yzd)
 
 ## 交流群
 
