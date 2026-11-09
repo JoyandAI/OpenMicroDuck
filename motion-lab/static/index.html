@@ -1,0 +1,404 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#f4f0e9">
+  <title>OpenMicroDuck · 动作实验室</title>
+  <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+<div class="shell">
+  <header class="topbar">
+    <a class="brand" href="/" aria-label="OpenMicroDuck Motion Lab">
+      <span class="brand-mark" aria-hidden="true">
+        <span></span><span></span><span></span>
+      </span>
+      <span class="brand-copy">
+        <strong>OpenMicroDuck</strong>
+        <small>MOTION LAB</small>
+      </span>
+    </a>
+
+    <div class="url-pill" title="本地服务地址">
+      <span class="pulse" id="pulse"></span>
+      <span id="server-url">127.0.0.1:18765</span>
+    </div>
+
+    <div class="top-actions">
+      <span class="chip chip-quiet">CPU · ONNX Runtime</span>
+      <span class="chip chip-live" id="connection">本地连接中</span>
+    </div>
+  </header>
+
+  <div class="workspace">
+    <aside class="column left-column">
+      <section class="panel telemetry" aria-labelledby="telemetry-title">
+        <div class="panel-head">
+          <div>
+            <span class="eyebrow">TELEMETRY</span>
+            <h2 id="telemetry-title">机身遥测</h2>
+          </div>
+          <span class="tiny-status" id="run-status">站立保持</span>
+        </div>
+        <div class="telemetry-grid">
+          <div class="metric">
+            <span>机身高度</span>
+            <strong><span id="height">—</span><em>mm</em></strong>
+          </div>
+          <div class="metric">
+            <span>横滚 / 俯仰</span>
+            <strong><span id="tilt">—</span><em>°</em></strong>
+          </div>
+          <div class="metric">
+            <span>横向位移</span>
+            <strong><span id="lateral">—</span><em>mm</em></strong>
+          </div>
+          <div class="metric">
+            <span>速度指令</span>
+            <strong><span id="speed">—</span><em>m/s</em></strong>
+          </div>
+        </div>
+        <div class="position-card">
+          <div class="position-head">
+            <span class="position-title">POSITION <em>4.2 s</em></span>
+            <span class="position-now">
+              <span class="pos-key pos-x">X</span><b id="position-x">—</b>
+              <span class="pos-key pos-y">Y</span><b id="position-y">—</b><i>mm</i>
+            </span>
+          </div>
+          <div class="position-plot">
+            <canvas id="position-canvas" role="img" aria-label="机身 X/Y 位置最近 4.2 秒曲线"></canvas>
+          </div>
+          <div class="position-axis">
+            <span>0.0 s</span><span id="position-range">±20 mm</span><span>4.2 s</span>
+          </div>
+        </div>
+        <div class="telemetry-foot">
+          <span>POSITION TRACE</span>
+          <span id="auto-reset">AUTO RESET 0</span>
+        </div>
+      </section>
+
+      <section class="panel chat" aria-labelledby="chat-title">
+        <div class="panel-head compact">
+          <div>
+            <span class="eyebrow">中文互动</span>
+            <h2 id="chat-title">对小鸭说</h2>
+          </div>
+          <span class="chat-dot" aria-hidden="true"></span>
+        </div>
+        <div class="messages" id="messages" aria-live="polite">
+          <div class="message assistant">
+            <span class="msg-label">小鸭</span>
+            <p>本地策略已加载。试试“站起来”“向前走”“捡东西”“前滚翻”。</p>
+          </div>
+        </div>
+        <div class="quick-chips" aria-label="快捷指令">
+          <button type="button" data-chat="站起来">站起来</button>
+          <button type="button" data-chat="向前走">向前走</button>
+          <button type="button" data-chat="捡东西">捡东西</button>
+          <button type="button" data-chat="前滚翻">前滚翻</button>
+        </div>
+        <form class="composer" id="chat-form">
+          <input id="chat-input" type="text" placeholder="试试：红球在哪里 / 坐下 / 重置" autocomplete="off" aria-label="输入指令">
+          <button class="send-button" type="submit" aria-label="发送">发送</button>
+        </form>
+        <div class="composer-foot">
+          <button class="mic-button" id="mic-button" type="button" aria-label="开始语音输入">
+            <span class="mic-icon">◉</span><span id="mic-label">开始录音</span>
+          </button>
+          <span class="hint">可选，取决于浏览器</span>
+        </div>
+      </section>
+    </aside>
+
+    <main class="column center-column">
+      <section class="stage" id="stage" aria-label="MuJoCo 三维回放">
+        <img id="stream" src="/frame.jpg" data-stream="/stream.mjpg?v=7" alt="OpenMicroDuck 的 MuJoCo 三维回放画面" draggable="false">
+        <div class="stage-top">
+          <div class="stage-chip">
+            <span class="pulse small"></span>
+            <span>本地 CPU · MuJoCo</span>
+          </div>
+          <div class="stage-tools">
+            <span class="stage-chip mono" id="fps">— FPS</span>
+            <button class="stage-tool" id="reset-camera" type="button" title="复位镜头">复位视角</button>
+          </div>
+        </div>
+
+        <div class="stage-caption">
+          <span class="caption-kicker">PHYSICS PLAYBACK</span>
+          <strong id="caption-mode">站立保持</strong>
+          <span id="caption-event">拖动画面旋转，滚轮缩放</span>
+        </div>
+
+        <div class="stage-bottom">
+          <div class="playback">
+            <button class="play-button" id="pause-button" type="button" aria-label="暂停">
+              <span id="pause-icon">Ⅱ</span>
+            </button>
+            <div class="timeline-wrap">
+              <div class="timeline-meta">
+                <span id="mode-pill">站立</span>
+                <span id="sim-time">00:00.0</span>
+              </div>
+              <div class="timeline"><span id="timeline-fill"></span></div>
+            </div>
+            <button class="ghost-button" id="reset-button" type="button">重置</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- Merged control console: manual quick-controls + per-action tuning,
+           sitting directly under the 3D stage. -->
+      <section class="panel console" id="console" aria-labelledby="console-title">
+        <div class="console-head">
+          <div class="console-title-wrap">
+            <span class="eyebrow">CONTROL CONSOLE · 免训练调参</span>
+            <h2 id="console-title">当前动作 · <span id="console-action">站立</span></h2>
+          </div>
+          <span class="console-note" id="console-note">已载入该动作推荐值</span>
+          <div class="console-actions">
+            <button class="ghost-button tiny" id="tune-reset" type="button">恢复本动作推荐值</button>
+            <button class="ghost-button tiny" id="console-expand" type="button" aria-expanded="false">展开全部参数 ▸</button>
+          </div>
+        </div>
+
+        <!-- My presets: one saved slot. Save current params, load them back,
+             or load the board deploy defaults. No names, no list. -->
+        <div class="preset-bar" id="preset-bar">
+          <span class="preset-eyebrow">我的预设</span>
+          <button class="ghost-button tiny" id="preset-save" type="button" title="保存当前全部参数">自定义保存</button>
+          <button class="ghost-button tiny" id="preset-load" type="button" title="载入已保存的参数，覆盖当前" disabled>自定义载入</button>
+          <button class="ghost-button tiny" id="preset-default" type="button" title="载入默认部署参数，覆盖当前">默认载入</button>
+          <span class="preset-hint" id="preset-hint"></span>
+        </div>
+
+        <div class="console-body">
+          <!-- left: manual quick controls -->
+          <div class="console-manual">
+            <div class="manual-caption">手动微调</div>
+            <div class="control-label"><span>头部朝向</span><span id="head-value">0.00 rad</span></div>
+            <div class="segmented" role="group" aria-label="头部朝向">
+              <button type="button" data-head="0.65">向左看</button>
+              <button type="button" data-head="0">回正</button>
+              <button type="button" data-head="-0.65">向右看</button>
+            </div>
+
+            <div class="control-label"><span>前进速度（实时）</span><span id="speed-value">0.12 m/s</span></div>
+            <input class="slider" id="speed-slider" type="range" min="0" max="0.3" step="0.01" value="0.12" aria-label="前进速度">
+
+            <div class="button-row">
+              <button class="soft-button" id="walk-button" type="button">向前走</button>
+              <button class="soft-button" id="stop-button" type="button">停止</button>
+            </div>
+          </div>
+
+          <!-- right: per-action knob deck -->
+          <div class="console-knobs">
+            <div class="knobs-caption">
+              <span id="knobs-caption-text">该动作调参</span>
+              <span class="knobs-hint">选动作自动载入推荐值 · 拖动立即生效</span>
+            </div>
+
+            <div class="knob-deck" id="knob-deck">
+              <div class="knob-group" data-group="smooth">① 平滑 · 治机械感</div>
+
+              <div class="knob" data-knob="tune-legs" data-group="smooth">
+                <div class="knob-top"><span>腿部平滑 <button class="info" type="button" data-tip="腿部关节目标的一阶低通。越低越平滑、越能压掉走路的机械抖动；1.0 = 不滤波（原始策略输出，机械感最强）。部署值 0.70。">!</button></span><span id="tune-legs-value">0.70</span></div>
+                <input class="slider" id="tune-legs" type="range" min="0.2" max="1" step="0.01" value="0.7" aria-label="腿部低通">
+              </div>
+
+              <div class="knob" data-knob="tune-head" data-group="smooth">
+                <div class="knob-top"><span>头部平滑 <button class="info" type="button" data-tip="头颈 4 个关节目标的低通。压头部抖动，让头不那么“点头/摆头”。部署值 0.50。">!</button></span><span id="tune-head-value">0.50</span></div>
+                <input class="slider" id="tune-head" type="range" min="0.2" max="1" step="0.01" value="0.5" aria-label="头部低通">
+              </div>
+
+              <label class="knob knob-check" data-knob="tune-smooth-skills" data-group="smooth">
+                <input type="checkbox" id="tune-smooth-skills"> <span>平滑也作用于踢 / 前滚翻</span>
+                <button class="info" type="button" data-tip="默认关：右踢和前滚翻是一次性快动作，滤波会让它们变钝、动量不够。只有在这两个动作抖得厉害时才打开。">!</button>
+              </label>
+
+              <div class="knob-group" data-group="power">② 动作力度 · 治翻不过去 / 不利落</div>
+
+              <div class="knob" data-knob="tune-walk-scale" data-group="power">
+                <div class="knob-top"><span>行走力度 <button class="info" type="button" data-tip="行走策略输出的放大倍数。调小步子更小更稳，调大步子更大但更晃。部署值 0.70。">!</button></span><span id="tune-walk-scale-value">0.70</span></div>
+                <input class="slider" id="tune-walk-scale" type="range" min="0.3" max="1.2" step="0.01" value="0.7" aria-label="行走力度">
+              </div>
+
+              <div class="knob" data-knob="tune-kick-scale" data-group="power">
+                <div class="knob-top"><span>右踢力度 <button class="info" type="button" data-tip="右踢动作的放大倍数。调大踢得更狠、幅度更大；调小更收敛、去掉多余摆动。部署值 0.70。">!</button></span><span id="tune-kick-scale-value">0.70</span></div>
+                <input class="slider" id="tune-kick-scale" type="range" min="0.3" max="1.3" step="0.01" value="0.7" aria-label="右踢力度">
+              </div>
+
+              <div class="knob" data-knob="tune-roulade-scale" data-group="power">
+                <div class="knob-top"><span>前滚翻力度 <button class="info" type="button" data-tip="策略输出的放大倍数。默认 1.00 即训练与部署值，翻滚已稳定；偏离它通常只会翻歪，仅用于实验。">!</button></span><span id="tune-roulade-scale-value">1.00</span></div>
+                <input class="slider" id="tune-roulade-scale" type="range" min="0.5" max="1.6" step="0.01" value="1" aria-label="前滚翻力度">
+              </div>
+
+              <div class="knob-group" data-group="timing">③ 速度 · 时序</div>
+
+              <div class="knob" data-knob="tune-vx" data-group="timing">
+                <div class="knob-top"><span>默认前进速度 <button class="info" type="button" data-tip="“向前走”预设 / 语音触发时用的前进速度指令。部署值 0.16 m/s。">!</button></span><span id="tune-vx-value">0.16 m/s</span></div>
+                <input class="slider" id="tune-vx" type="range" min="0" max="0.35" step="0.01" value="0.16" aria-label="默认前进速度">
+              </div>
+
+              <div class="knob" data-knob="tune-kick" data-group="timing">
+                <div class="knob-top"><span>右踢时长 <button class="info" type="button" data-tip="右踢从触发到交回站立的时长。调短 = 踢完更快收回，剪掉多余尾动作；太短会在还没踢完就收。部署值 0.50 s。">!</button></span><span id="tune-kick-value">0.50 s</span></div>
+                <input class="slider" id="tune-kick" type="range" min="0.2" max="1.2" step="0.02" value="0.5" aria-label="右踢时长">
+              </div>
+
+              <div class="knob" data-knob="tune-roulade" data-group="timing">
+                <div class="knob-top"><span>前滚翻时限 <button class="info" type="button" data-tip="翻滚的最长时限。翻滚完成（转过头顶且身体回正）会自动交回站立，通常约 1 秒；只有卡住时才会用满这个时限。默认 3.00 s。">!</button></span><span id="tune-roulade-value">3.00 s</span></div>
+                <input class="slider" id="tune-roulade" type="range" min="0.8" max="3" step="0.02" value="3" aria-label="前滚翻时限">
+              </div>
+
+              <div class="knob" data-knob="tune-roulade-prep" data-group="timing">
+                <div class="knob-top"><span>前滚翻预备 <button class="info" type="button" data-tip="滚之前先回到标准站姿并稳定的时间。这个策略对起始姿势很敏感，稳定不够会翻歪或翻不过去。部署值 1.02 s。">!</button></span><span id="tune-roulade-prep-value">1.02 s</span></div>
+                <input class="slider" id="tune-roulade-prep" type="range" min="0.3" max="2.5" step="0.02" value="1.02" aria-label="前滚翻预备时间">
+              </div>
+
+              <div class="knob" data-knob="tune-standup" data-group="timing">
+                <div class="knob-top"><span>起身交接 <button class="info" type="button" data-tip="坐→站时，先由坐站策略起身、再交给站立策略的时间窗。交接过早会起不稳、过晚会在原地多蹬几下。想减少“起立后找平衡的小动作”先调这个。部署值 0.30 s。">!</button></span><span id="tune-standup-value">0.30 s</span></div>
+                <input class="slider" id="tune-standup" type="range" min="0.1" max="1.2" step="0.02" value="0.3" aria-label="起身交接时间">
+              </div>
+
+              <div class="knob" data-knob="tune-sitnudge" data-group="timing">
+                <div class="knob-top"><span>坐下脉冲 <button class="info" type="button" data-tip="坐下瞬间注入的一小段下蹲脉冲，帮坐站策略脱离“静止不动”的死区。0 = 不注入。部署值 0.10 s。">!</button></span><span id="tune-sitnudge-value">0.10 s</span></div>
+                <input class="slider" id="tune-sitnudge" type="range" min="0" max="0.4" step="0.02" value="0.1" aria-label="坐下脉冲时长">
+              </div>
+
+              <div class="knob" data-knob="tune-groundpick" data-group="timing">
+                <div class="knob-top"><span>捡拾循环长度 <button class="info" type="button" data-tip="一次捡拾循环的长度（相位单位）。调长动作更完整，调短更快收回站立。部署值 0.70。">!</button></span><span id="tune-groundpick-value">0.70</span></div>
+                <input class="slider" id="tune-groundpick" type="range" min="0.3" max="1.2" step="0.02" value="0.7" aria-label="捡拾循环长度">
+              </div>
+
+              <div class="knob-group" data-group="safety">④ 失稳保护 · 自动复位</div>
+
+              <div class="knob" data-knob="tune-falltilt" data-group="safety">
+                <div class="knob-top"><span>失稳角度阈值 <button class="info" type="button" data-tip="机身横滚 / 俯仰超过这个角度（弧度）才开始计时判定摔倒。调大更宽容（不易误判成摔倒），调小更灵敏。部署值 1.25 rad ≈ 72°。">!</button></span><span id="tune-falltilt-value">1.25 rad</span></div>
+                <input class="slider" id="tune-falltilt" type="range" min="0.6" max="2.2" step="0.01" value="1.25" aria-label="失稳角度阈值">
+              </div>
+
+              <div class="knob" data-knob="tune-fallheight" data-group="safety">
+                <div class="knob-top"><span>趴下高度阈值 <button class="info" type="button" data-tip="机身离地高度低于此值视为趴下。部署值 0.035 m。">!</button></span><span id="tune-fallheight-value">0.035 m</span></div>
+                <input class="slider" id="tune-fallheight" type="range" min="0" max="0.12" step="0.005" value="0.035" aria-label="趴下高度阈值">
+              </div>
+
+              <div class="knob" data-knob="tune-fallgrace" data-group="safety">
+                <div class="knob-top"><span>复位宽限时间 <button class="info" type="button" data-tip="持续失稳多久才触发自动复位到站姿。调大给策略更多自救时间（但摔久了才复位）。部署值 1.3 s。">!</button></span><span id="tune-fallgrace-value">1.3 s</span></div>
+                <input class="slider" id="tune-fallgrace" type="range" min="0.3" max="4" step="0.1" value="1.3" aria-label="复位宽限时间">
+              </div>
+
+              <div class="knob-group" data-group="display">⑤ 显示 · 不影响控制</div>
+
+              <div class="knob" data-knob="tune-renderfps" data-group="display">
+                <div class="knob-top"><span>画面帧率 <button class="info" type="button" data-tip="画面推送帧率，只影响显示流畅度，不改变 50 Hz 控制与物理步进。调高更顺但更吃 CPU。部署值 24。">!</button></span><span id="tune-renderfps-value">24 fps</span></div>
+                <input class="slider" id="tune-renderfps" type="range" min="6" max="60" step="1" value="24" aria-label="画面帧率">
+              </div>
+
+              <div class="knob" data-knob="tune-quality" data-group="display">
+                <div class="knob-top"><span>画面质量 jpeg <button class="info" type="button" data-tip="画面 JPEG 压缩质量。调低更省 CPU / 带宽、画质略糊；调高更清晰但更吃 CPU。部署值 78。">!</button></span><span id="tune-quality-value">78</span></div>
+                <input class="slider" id="tune-quality" type="range" min="30" max="95" step="1" value="78" aria-label="画面质量">
+              </div>
+            </div>
+
+            <div class="console-foot">
+              <p class="basic-hint"><strong>控制频率固定 50 Hz</strong>（训练契约，不可调；“画面帧率”只改显示）。<span class="only-expanded">展开视图显示全部 17 个参数；点 <strong>恢复本动作推荐值</strong> 回到该动作推荐起点。</span></p>
+              <button class="ghost-button tiny only-expanded" id="tune-reset-deploy" type="button">恢复全部部署值</button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <div class="under-stage">
+        <div class="fact">
+          <span class="fact-key">MODEL</span>
+          <strong>HD-1910 · 14 DoF</strong>
+        </div>
+        <div class="fact">
+          <span class="fact-key">RUNTIME</span>
+          <strong>ONNX · CPU</strong>
+        </div>
+        <div class="fact">
+          <span class="fact-key">SCENE</span>
+          <strong>Flat · 50 Hz</strong>
+        </div>
+      </div>
+    </main>
+
+    <aside class="column right-column">
+      <section class="panel presets" aria-labelledby="presets-title">
+        <div class="panel-head">
+          <div>
+            <span class="eyebrow">动作预设</span>
+            <h2 id="presets-title">六个策略</h2>
+          </div>
+          <span class="count-badge">6 / 6</span>
+        </div>
+        <div class="preset-list" id="preset-list">
+          <button class="preset" type="button" data-mode="walk">
+            <span class="preset-mark">↗</span>
+            <span class="preset-copy"><strong>行走</strong><small>速度跟踪 · 前进/横移</small></span>
+            <span class="preset-arrow">→</span>
+          </button>
+          <button class="preset" type="button" data-mode="stand">
+            <span class="preset-mark">◒</span>
+            <span class="preset-copy"><strong>站立</strong><small>姿态保持 · 头部微调</small></span>
+            <span class="preset-arrow">→</span>
+          </button>
+          <button class="preset" type="button" data-mode="sitstand">
+            <span class="preset-mark">◡</span>
+            <span class="preset-copy"><strong id="sitstand-label">坐下</strong><small>同一个策略完成坐下与站起</small></span>
+            <span class="preset-arrow">→</span>
+          </button>
+          <button class="preset" type="button" data-mode="ground_pick">
+            <span class="preset-mark">⌄</span>
+            <span class="preset-copy"><strong>捡东西</strong><small>一次完整捡拾循环</small></span>
+            <span class="preset-arrow">→</span>
+          </button>
+          <button class="preset" type="button" data-mode="kick_right">
+            <span class="preset-mark">↘</span>
+            <span class="preset-copy"><strong>右踢</strong><small>右脚触球 · 0.5 秒回站立</small></span>
+            <span class="preset-arrow">→</span>
+          </button>
+          <button class="preset" type="button" data-mode="roulade">
+            <span class="preset-mark">↻</span>
+            <span class="preset-copy"><strong>前滚翻</strong><small>校准站姿 1 秒 · 翻滚约 1 秒</small></span>
+            <span class="preset-arrow">→</span>
+          </button>
+        </div>
+        <p class="preset-foot">策略来自仓库根 <code>policies/OpenMD_*.onnx</code></p>
+      </section>
+
+      <section class="panel system" aria-labelledby="system-title">
+        <div class="panel-head compact">
+          <div>
+            <span class="eyebrow">LOCAL RUNTIME</span>
+            <h2 id="system-title">运行状态</h2>
+          </div>
+          <span class="health-dot" aria-hidden="true"></span>
+        </div>
+        <div class="system-row"><span>推理设备</span><strong>CPU only</strong></div>
+        <div class="system-row"><span>策略加载</span><strong id="policy-count">6 / 6</strong></div>
+        <div class="system-row"><span>物理引擎</span><strong>MuJoCo</strong></div>
+        <div class="system-row"><span>渲染帧率</span><strong id="render-fps">—</strong></div>
+        <div class="system-note">没有 CUDA 也能跑。模型与 MJCF 均来自本地项目。这是回放，不是训练——切策略只改当前控制，不动模型文件。</div>
+      </section>
+    </aside>
+  </div>
+
+  <footer class="footer">
+    <span>OpenMicroDuck Motion Lab</span>
+    <span class="footer-sep">·</span>
+    <span>本地回放，不上传模型</span>
+    <span class="footer-spacer"></span>
+    <span class="mono" id="footer-time">—</span>
+  </footer>
+</div>
+
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+<script src="/app.js"></script>
+</body>
+</html>

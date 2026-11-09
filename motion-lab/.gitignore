@@ -1,0 +1,7 @@
+.venv/
+__pycache__/
+*.pyc
+.DS_Store
+MUJOCO_LOG.TXT
+.motion-lab.pid
+.motion-lab.log

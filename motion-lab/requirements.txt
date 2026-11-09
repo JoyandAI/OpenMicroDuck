@@ -1,0 +1,6 @@
+# CPU-only runtime for the local motion lab.
+# Tested with Python 3.9 on macOS arm64.
+mujoco>=3.2.0,<4.0
+onnxruntime>=1.17.0,<2.0
+numpy>=1.24,<3.0
+Pillow>=10.0,<12.0
