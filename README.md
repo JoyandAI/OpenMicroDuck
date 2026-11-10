@@ -21,6 +21,7 @@ OpenMicroDuck 是一个**完全开源**的双足机器人平台：一只 25cm �
 ### 最新视频
 
 [OpenMicroduck--试一下我新的“鞋子”](https://www.bilibili.com/video/BV1bcxh6PE4x/)
+
 ![OpenMicroduck--试一下我新的“鞋子”](./assets/bilibili_BV1bcxh6PE4x.jpg)
 
 [OpenMicroDuck-展示一下国庆训练效果](https://www.bilibili.com/video/BV1hHHX6sEhS/)
@@ -45,7 +46,9 @@ OpenMicroDuck 是一个**完全开源**的双足机器人平台：一只 25cm �
 
 ## 交流群
 
-![交流群二维码](./assets/wechat_group_qrcode.jpg)
+<p align="center">
+  <img src="./assets/wechat_group_qrcode.jpg" width="50%" alt="交流群二维码">
+</p>
 
 ## BOM
 
