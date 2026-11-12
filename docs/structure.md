@@ -67,6 +67,19 @@ XL330 在拆掉副舵盘后是**凹下去**的，而 HD1910 是**突起的**—�
 
 ![](assets/structure/yaw-opt1.png)![](assets/structure/yaw-opt3.png)
 
+### 电池仓
+
+
+更新电池支架[power_support_battery_opt](/cad/parts/power_support_battery_opt.stl),兼容两种电池夹；
+**需要同步更换左右壳才能安装新版电池支架**[left_shell_battery_opt](/cad/parts/left_shell_battery_opt.stl)、[right_shell_battery_opt](/cad/parts/right_shell_battery_opt.stl)
+
+![](/docs/assets/structure/power-support-battery-opt.png)
+
+
+- 18650电池仓[battery_holder_18650](/cad/parts/battery_holder_18650.stl)
+
+- 21700电池仓[battery_holder_21700](/cad/parts/battery_holder_21700.stl)
+
 ### 腿部
 
 - **upper_leg**：
@@ -94,3 +107,17 @@ XL330 在拆掉副舵盘后是**凹下去**的，而 HD1910 是**突起的**—�
   3. 通过 foot 限位卡扣，极大缩小轴承松脱风险。
 
 ![](assets/structure/ankle-opt.png)![](assets/structure/ankle-opt2.png)
+
+### 轮滑（ankle）
+
+**优化前**：原版roller blade适配的是另一板ankle，不适配这一版。轮胎安装到轮毂的难度较大，轮毂安装到roller blade也很大，几乎装不进去。
+
+![](assets/structure/roller-blade.png)
+
+**优化后**：
+
+- 适配现有ankle结构；
+- 轮毂更好安装到roller blade上；
+- 轮胎相较原版好安装一点。
+
+![](assets/structure/roller-blade-opt.png)
