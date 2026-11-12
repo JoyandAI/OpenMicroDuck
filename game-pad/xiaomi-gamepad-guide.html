@@ -1,0 +1,769 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>小米蓝牙手柄一代 · OpenMicroDuck 控制落地手册</title>
+<style>
+  :root{
+    --bg:#f4f0e7; --paper:#fffdf8; --ink:#171b1e; --ink2:#343b3e;
+    --muted:#6f746f; --line:#ded5c5; --line2:#c9bda9;
+    --accent:#d65a25; --accent-bg:#fdf0e7;
+    --teal:#0e766d; --teal-bg:#e9f5f2;
+    --amber:#9b6500; --amber-bg:#fff6df;
+    --red:#a73a2a; --red-bg:#fdf0ed;
+    --code:#1d2327; --code-ink:#e9e1d2;
+    --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,"Liberation Mono",monospace;
+    --sans:system-ui,-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif;
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--sans);font-size:16px;line-height:1.7}
+  a{color:var(--teal);text-decoration-thickness:1px;text-underline-offset:3px}
+  .wrap{width:min(1180px,calc(100% - 36px));margin:0 auto}
+  .hero{padding:48px 0 30px;border-bottom:1px solid var(--line)}
+  .kicker{font-family:var(--mono);font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:var(--accent);font-weight:700}
+  h1{font-size:clamp(30px,4.2vw,58px);line-height:1.08;letter-spacing:-.035em;margin:10px 0 14px;max-width:900px}
+  .sub{max-width:760px;font-size:18px;color:var(--ink2);margin:0}
+  .hero-tags{display:flex;gap:8px;flex-wrap:wrap;margin-top:18px}
+  .tag{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line2);background:var(--paper);border-radius:999px;padding:4px 10px;font-size:12px;font-weight:700;color:var(--ink2)}
+  .tag b{color:var(--accent)}
+  .topbar{position:sticky;top:0;z-index:20;background:rgba(244,240,231,.93);backdrop-filter:blur(10px);border-bottom:1px solid var(--line)}
+  .topbar-in{display:flex;align-items:center;gap:14px;padding:10px 0}
+  .progress{flex:1;min-width:120px;height:9px;border-radius:99px;background:#e6ded0;overflow:hidden;border:1px solid #d8cdbb}
+  .progress i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--accent),#e99a5c);transition:width .25s}
+  .pcount{font-family:var(--mono);font-size:12px;color:var(--muted);white-space:nowrap}
+  .btn{border:1px solid var(--line2);background:var(--paper);color:var(--ink2);border-radius:8px;padding:6px 10px;font:inherit;font-size:12px;font-weight:700;cursor:pointer}
+  .btn:hover{border-color:#b7a68c;background:#fffaf1}
+  .btn.primary{background:var(--ink);border-color:var(--ink);color:#fff}
+  .layout{display:grid;grid-template-columns:250px minmax(0,1fr);gap:34px;align-items:start;padding:30px 0 80px}
+  .toc{position:sticky;top:72px;border:1px solid var(--line);background:var(--paper);border-radius:14px;padding:14px}
+  .toc h2{font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);margin:0 0 8px;font-family:var(--mono)}
+  .toc a{display:block;padding:6px 8px;border-radius:7px;color:var(--ink2);text-decoration:none;font-size:13px;font-weight:600}
+  .toc a:hover{background:var(--accent-bg);color:var(--accent)}
+  .toc .gap{height:8px}
+  main{min-width:0}
+  .step{background:var(--paper);border:1px solid var(--line);border-radius:18px;padding:clamp(20px,3vw,34px);margin:0 0 26px;box-shadow:0 1px 0 rgba(0,0,0,.02)}
+  .step-top{display:flex;gap:14px;align-items:flex-start;border-bottom:1px solid var(--line);padding-bottom:16px;margin-bottom:18px}
+  .num{width:44px;height:44px;flex:0 0 44px;border-radius:12px;display:grid;place-items:center;background:var(--ink);color:#fff;font-family:var(--mono);font-size:14px;font-weight:800}
+  .step h2{font-size:clamp(22px,2.4vw,31px);line-height:1.15;letter-spacing:-.02em;margin:0}
+  .step .where{font-size:12px;color:var(--muted);margin-top:3px}
+  .step h3{font-size:17px;margin:24px 0 8px;letter-spacing:-.01em}
+  .step h4{font-size:14px;margin:18px 0 6px;color:var(--ink2)}
+  .step p{margin:8px 0;color:var(--ink2)}
+  .step ul,.step ol{margin:8px 0;padding-left:22px;color:var(--ink2)}
+  li{margin:5px 0}
+  .lead{font-size:17px;color:var(--ink2)}
+  .pill{display:inline-block;border-radius:999px;padding:2px 8px;font-size:11px;font-weight:800;letter-spacing:.02em}
+  .pill.direct{color:var(--teal);background:var(--teal-bg);border:1px solid #bfe2db}
+  .pill.fallback{color:var(--amber);background:var(--amber-bg);border:1px solid #eed9a8}
+  .pill.danger{color:var(--red);background:var(--red-bg);border:1px solid #efc3b8}
+  .callout{border-radius:12px;padding:13px 15px;margin:14px 0;border:1px solid;font-size:14px}
+  .callout b{display:block;font-size:11px;letter-spacing:.1em;text-transform:uppercase;margin-bottom:2px;font-family:var(--mono)}
+  .callout.info{background:#f3f6f5;border-color:#d3dfdb}.callout.info b{color:var(--teal)}
+  .callout.warn{background:var(--amber-bg);border-color:#ecd49a}.callout.warn b{color:var(--amber)}
+  .callout.stop{background:var(--red-bg);border-color:#ecc0b5}.callout.stop b{color:var(--red)}
+  .callout.ok{background:var(--teal-bg);border-color:#bfe2db}.callout.ok b{color:var(--teal)}
+  .cmd{position:relative;background:var(--code);color:var(--code-ink);border-radius:12px;margin:12px 0;overflow:hidden;border:1px solid #101518}
+  .cmd .bar{display:flex;justify-content:space-between;align-items:center;padding:7px 11px;border-bottom:1px solid #333b40;color:#aeb7bb;font-family:var(--mono);font-size:10px;letter-spacing:.1em;text-transform:uppercase}
+  .copy{border:1px solid #414b51;background:#283036;color:#d8dfe2;border-radius:6px;padding:2px 8px;font:inherit;font-size:10px;cursor:pointer}
+  .copy:hover{background:#333d44}
+  .cmd pre{margin:0;padding:13px 14px;overflow:auto;font-family:var(--mono);font-size:12.5px;line-height:1.75;white-space:pre}
+  .check{display:flex;gap:10px;align-items:flex-start;background:#fbf8f1;border:1px solid var(--line);border-radius:10px;padding:10px 12px;margin:7px 0;cursor:pointer;font-size:14px;color:var(--ink2)}
+  .check:hover{border-color:#cbbba4}
+  .check input{appearance:none;width:19px;height:19px;flex:0 0 19px;margin:2px 0 0;border:1.5px solid #b9ab96;border-radius:6px;background:#fff;cursor:pointer;position:relative}
+  .check input:checked{background:var(--teal);border-color:var(--teal)}
+  .check input:checked::after{content:"✓";position:absolute;inset:-3px 0 0 3px;color:#fff;font-size:15px;font-weight:900}
+  .check b{color:var(--ink)}
+  table{width:100%;border-collapse:collapse;margin:12px 0;font-size:13px;background:#fffdf9;border:1px solid var(--line);border-radius:10px;overflow:hidden;display:table}
+  th,td{padding:8px 10px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top}
+  th{background:#f7f2e9;color:var(--muted);font-size:10.5px;letter-spacing:.08em;text-transform:uppercase}
+  tr:last-child td{border-bottom:0}
+  td code,p code,li code{font-family:var(--mono);font-size:.9em;background:#f2ece1;border:1px solid #e4d9c7;border-radius:4px;padding:1px 4px}
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+  .mini{border:1px solid var(--line);border-radius:12px;padding:13px 14px;background:#fcf9f2}
+  .mini h4{margin:0 0 6px}
+  .kbd{font-family:var(--mono);font-size:11px;border:1px solid #c7b9a4;border-bottom-width:2px;border-radius:5px;padding:1px 5px;background:#fff;color:var(--ink2);white-space:nowrap}
+  .divider{height:1px;background:var(--line);margin:24px 0}
+  .finish{background:linear-gradient(135deg,#14211f,#1f3430);color:#f7f3e8;border:0}
+  .finish h2,.finish h3,.finish p,.finish li{color:inherit}
+  .finish .num{background:var(--accent)}
+  .finish .check{background:rgba(255,255,255,.07);border-color:rgba(255,255,255,.16);color:#e9e5d9}
+  .finish .check b{color:#fff}
+  .finish .check input{background:rgba(255,255,255,.08);border-color:#8da19b}
+  .finish .check input:checked{background:var(--accent);border-color:var(--accent)}
+  .finish a{color:#f3b48f}
+  .finish .where{color:#b9c7c1}
+  .finish table{background:#182b27;border-color:#3b514b;color:#f2eee3}
+  .finish th{background:#213a34;color:#d9e4de;border-bottom-color:#40564f}
+  .finish td{color:#f2eee3;border-bottom-color:#344a44}
+  .finish td code,.finish p code,.finish li code{background:#2a403a;border-color:#50675f;color:#fff6e8}
+  .finish .small{color:#b8c8c0}
+  .finish .callout.ok{background:#173d38;border-color:#3c776c;color:#e9f7f4}
+  .finish .callout.ok b{color:#9be5d8}
+  .small{font-size:12px;color:var(--muted)}
+  .mono{font-family:var(--mono)}
+  .nowrap{white-space:nowrap}
+  .footer{padding:28px 0 60px;color:var(--muted);font-size:12px;border-top:1px solid var(--line)}
+  .parthead{margin:34px 0 16px;padding:clamp(20px,3vw,30px);border-radius:16px;background:linear-gradient(135deg,#182320,#243833);color:#f8f3e7;box-shadow:0 2px 0 rgba(0,0,0,.04)}
+  .parthead .pk{font-family:var(--mono);font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:#f1a078;font-weight:800}
+  .parthead h2{font-size:clamp(22px,2.6vw,32px);line-height:1.15;letter-spacing:-.02em;margin:7px 0 6px;color:#fff}
+  .parthead p{margin:0;max-width:820px;color:#d9ded7;font-size:14px}
+  .parthead .split{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+  .parthead .split span{border:1px solid rgba(255,255,255,.18);border-radius:999px;padding:3px 9px;font-size:11px;color:#e9e4d8;background:rgba(255,255,255,.05)}
+  @media (max-width:900px){
+    .layout{grid-template-columns:1fr;gap:18px;padding-top:18px}
+    .toc{position:static;display:grid;grid-template-columns:1fr 1fr;gap:0 10px;padding:10px}
+    .toc h2{grid-column:1/-1}
+    .toc .gap{display:none}
+    .grid2{grid-template-columns:1fr}
+    .hero{padding-top:30px}
+    table{display:block;overflow:auto}
+  }
+  @media print{
+    .topbar,.toc,.copy,.btn,.hero-tags{display:none!important}
+    body{background:#fff;font-size:12px}
+    .wrap{width:100%}
+    .layout{display:block;padding:0}
+    .step{break-inside:avoid;box-shadow:none;border-color:#bbb;margin-bottom:14px;padding:16px}
+    .cmd{background:#f4f4f4;color:#111;border-color:#bbb}
+    .cmd pre{color:#111}
+    .check{break-inside:avoid}
+  }
+</style>
+</head>
+<body>
+
+<header class="hero">
+  <div class="wrap">
+    <div class="kicker">OpenMicroDuck · Controller Integration</div>
+    <h1>小米蓝牙手柄一代<br>控制机器人 · 逐步落地手册</h1>
+    <p class="sub">从配对、安装用户态驱动、映射按键，到安全驾驶、技能测试和最终验收。尽量复用这只手柄，不把“换手柄”作为方案前提。</p>
+    <div class="hero-tags">
+      <span class="tag">PART I <b>只连手柄</b></span>
+      <span class="tag">PART II <b>控制机器人</b></span>
+      <span class="tag">原则 <b>尽量复用原手柄</b></span>
+      <span class="tag">目标 <b>可安全行走 + 技能</b></span>
+    </div>
+  </div>
+</header>
+
+<div class="topbar">
+  <div class="wrap topbar-in">
+    <span class="pcount" id="pcount">0 / 0</span>
+    <div class="progress" aria-hidden="true"><i id="pbar"></i></div>
+    <button class="btn" type="button" id="printBtn">打印 / PDF</button>
+    <button class="btn" type="button" id="resetBtn">清空进度</button>
+  </div>
+</div>
+
+<div class="wrap layout">
+  <aside class="toc" aria-label="目录">
+    <h2>开始</h2>
+    <a href="#overview">方案与安全</a>
+    <h2>PART I · 只连手柄</h2>
+    <a href="#step0">01 · 准备（不接机器人）</a>
+    <a href="#step1">02 · 配对到板子</a>
+    <a href="#step2">03 · 装驱动 + 键位验收</a>
+    <h2>PART II · 控制机器人</h2>
+    <a href="#step3">04 · 接入 padd 与映射</a>
+    <a href="#step4">05 · 安全驾驶</a>
+    <a href="#step5">06 · deadman / 掉线 / 物理断电</a>
+    <a href="#step6">07 · 技能按键</a>
+    <a href="#step7">08 · 最终验收</a>
+    <a href="#reference">参数、风险、回滚</a>
+  </aside>
+
+  <main>
+    <section class="step" id="overview">
+      <div class="step-top">
+        <div class="num">00</div>
+        <div>
+          <h2>方案：板载用户态驱动</h2>
+          <div class="where">目标：让手柄真正控制机器人，而不是只看到“已连接”</div>
+        </div>
+      </div>
+      <p class="lead">小米蓝牙手柄一代是 <b>Bluetooth 3.0 经典蓝牙</b>，不是 BLE。它的规格页写的是“即插即用、无需驱动”，但那是针对小米电视/盒子；Linux 内核的通用 HID 映射会把 A/B/X/Y 和右摇杆弄错。因此本方案不直接使用内核原始节点，而是先装用户态驱动，把它变成标准标准虚拟手柄。</p>
+
+      <div class="grid2">
+        <div class="mini">
+          <h4><span class="pill direct">链路</span> 板载直连</h4>
+          <p>原手柄 → Radxa 蓝牙 → <code>xiaomi-gamepad</code> 用户态驱动 → <b>标准虚拟手柄</b> → <code>padd</code> → <code>robotd</code>。</p>
+        </div>
+        <div class="mini">
+          <h4><span class="pill direct">为什么</span> 用户态驱动</h4>
+          <p>内核通用 HID 会把这只手柄的 A/B/X/Y 和右摇杆映射错；用户态驱动专门修正它，并隐藏错误节点。</p>
+        </div>
+      </div>
+
+      <h3>最终“落地”的定义</h3>
+      <label class="check"><input type="checkbox" data-id="goal-drive"><span><b>能驾驶</b>：起立后，左摇杆前进/后退/横移，右摇杆转向。</span></label>
+      <label class="check"><input type="checkbox" data-id="goal-stop"><span><b>能安全停</b>：手离开摇杆后 deadman 停止；物理断电一手可断；关手柄后自动停止。</span></label>
+      <label class="check"><input type="checkbox" data-id="goal-skills"><span><b>能测模式/技能</b>：A/B/L1/R1 有独立语义，X 不绑定，且不会误触。</span></label>
+      <label class="check"><input type="checkbox" data-id="goal-signoff"><span><b>有验收记录</b>：MAC、<code>padd</code> 版本、服务 enabled 状态和测试结果都留下。</span></label>
+
+      <div class="callout info"><b>安全提醒</b>第一次测试必须让机器人趴在软垫上或由人扶住。不要把“先按一下试试”用在站立的整机上。</div>
+    </section>
+
+    <section class="parthead" id="part1">
+      <div class="pk">PART I · 只连手柄，不接机器人</div>
+      <h2>先让手柄自己变成标准虚拟手柄</h2>
+      <p>这一部分只使用板子、手柄和蓝牙。目标不是让机器人动，而是确认手柄在 Linux 下是一个干净、按键正确、右摇杆可用的标准虚拟手柄。此阶段不需要舵机、robotd、padd 或任何机器人装配。</p>
+      <div class="split">
+        <span>不接机器人</span><span>不启动机器人策略</span><span>只验收手柄</span>
+      </div>
+    </section>
+
+    <section class="step" id="step0">
+      <div class="step-top">
+        <div class="num">01</div>
+        <div>
+          <h2>准备：板子、手柄、电池、网络</h2>
+          <div class="where">时间 10–15 分钟 · 机器人完全不参与</div>
+        </div>
+      </div>
+
+      <h3>你需要准备</h3>
+      <ul>
+        <li>小米蓝牙手柄一代、<b>2 节 AA 电池</b>。先用碱性电池；不要用 3.7 V 14500。</li>
+        <li>Radxa Zero 3W 板子，能 SSH 登录。</li>
+        <li>机器人不需要装好；这一部分不接舵机、不启动机器人策略。</li>
+        <li>板子 IP 或主机名。下面示例用 <code>radxa-zero3.local</code>，换成你的。</li>
+      </ul>
+
+      <h3>先在 Mac 上设置板子地址</h3>
+      <div class="cmd"><div class="bar"><span>bash · Mac</span><button class="copy" type="button">复制</button></div><pre><code>BOARD=radxa@radxa-zero3.local
+ssh "$BOARD" 'hostname; uname -a'</code></pre></div>
+      <p>能看到 hostname 和内核版本即可。本部分不检查 <code>robotd</code>/<code>padd</code>，也不要求机器人上线。</p>
+
+      <h3>板子上确认蓝牙和输入工具</h3>
+      <div class="cmd"><div class="bar"><span>bash · 板子</span><button class="copy" type="button">复制</button></div><pre><code>sudo systemctl status bluetooth --no-pager
+command -v bluetoothctl
+command -v evtest || sudo apt update &amp;&amp; sudo apt install -y evtest joystick</code></pre></div>
+      <p>没有网络装不了 <code>evtest</code> 也没关系，后面用 <code>padd</code> 日志判断；但没有蓝牙工具就不行。</p>
+
+      <h3>记录环境</h3>
+      <table>
+        <tr><th>项目</th><th>你的记录</th></tr>
+        <tr><td>板子 hostname / IP</td><td></td></tr>
+        <tr><td>手柄 MAC（配对后填）</td><td></td></tr>
+        <tr><td>驱动 / 固件版本</td><td></td></tr>
+        <tr><td>测试日期</td><td></td></tr>
+      </table>
+      <label class="check"><input type="checkbox" data-id="s0-ssh"><span>SSH 能登录板子；不要求机器人在线。</span></label>
+      <label class="check"><input type="checkbox" data-id="s0-tools"><span>板子有 <code>bluetoothctl</code> 和 <code>evtest</code>（或已记录替代验证方式）。</span></label>
+      <label class="check"><input type="checkbox" data-id="s0-battery"><span>手柄装好 2 节新 AA 电池；机器人保持不参与。</span></label>
+    </section>
+
+    <section class="step" id="step1">
+      <div class="step-top">
+        <div class="num">02</div>
+        <div>
+          <h2>配对到板子：先让 BlueZ 看见它</h2>
+          <div class="where">时间 15–20 分钟 · 板子终端 · 不接机器人</div>
+        </div>
+      </div>
+
+      <div class="callout stop"><b>先确认终端</b>下面的命令全部在 <b>Radxa 板子的 SSH 终端</b>里执行，不是在 Mac 上。Mac 没有 <code>bluetoothctl</code>。</div>
+
+      <h3>1. 登录板子，启动蓝牙</h3>
+      <div class="cmd"><div class="bar"><span>bash · 板子</span><button class="copy" type="button">复制</button></div><pre><code>sudo systemctl start bluetooth
+sudo rfkill unblock bluetooth
+sudo bluetoothctl</code></pre></div>
+      <p>看到 <code>[bluetooth]#</code> 提示符后，下面的命令都在这个提示符里输入。</p>
+
+      <h3>2. 让手柄进入配对模式</h3>
+      <p>按你原来配小米电视/手机的方式进入配对；如果有配对键就按配对键。指示灯应<b>快速闪烁</b>。不同批次组合不同，以灯快闪为准。</p>
+
+      <h3>3. 扫描并找到 MAC</h3>
+      <div class="cmd"><div class="bar"><span>bluetoothctl</span><button class="copy" type="button">复制</button></div><pre><code>power on
+agent on
+default-agent
+scan on</code></pre></div>
+      <p>等待出现：</p>
+      <pre><code>[NEW] Device XX:XX:XX:XX:XX:XX Xiaomi Gamepad</code></pre>
+      <p>也可以用 <code>devices</code> 查看当前扫描结果。记下小米手柄的 MAC。</p>
+
+      <h3>4. 关键：先 scan off，再配对</h3>
+      <div class="cmd"><div class="bar"><span>bluetoothctl</span><button class="copy" type="button">复制</button></div><pre><code>scan off</code></pre></div>
+      <p>扫描不关，后面的 <code>pair</code> 可能一直返回 <code>not available</code>。先关扫描，再配对。</p>
+
+      <h3>5. 配对、信任、连接</h3>
+      <p>把下面四行的 MAC 全部换成你记下的真实地址：</p>
+      <div class="cmd"><div class="bar"><span>bluetoothctl</span><button class="copy" type="button">复制</button></div><pre><code>pair XX:XX:XX:XX:XX:XX
+trust XX:XX:XX:XX:XX:XX
+connect XX:XX:XX:XX:XX:XX
+info XX:XX:XX:XX:XX:XX</code></pre></div>
+
+      <p>如果提示 PIN，先试 <code>0000</code>。输错就重新进入配对模式，不要反复试到锁定。</p>
+
+      <div class="callout stop"><b>Device ... not available</b>说明这个 MAC 当前不在 BlueZ 缓存里。回到 <code>scan on</code>，等 <code>[NEW] Device</code> 或 <code>devices</code> 出现，再 <code>scan off</code> → <code>pair</code>。不要连续 <code>connect</code>。</div>
+
+      <h3>6. 确认已连接</h3>
+      <p><code>info</code> 应看到：</p>
+      <ul>
+        <li><code>Name: 小米蓝牙手柄</code></li>
+        <li><code>Icon: input-gaming</code></li>
+        <li><code>Paired: yes</code>、<code>Trusted: yes</code></li>
+        <li><code>Connected: yes</code></li>
+        <li><code>LegacyPairing: no</code></li>
+      </ul>
+      <p>然后退出：<code>quit</code>。</p>
+
+      <h3>已经配对过，只是没连上</h3>
+      <div class="cmd"><div class="bar"><span>bash · 板子</span><button class="copy" type="button">复制</button></div><pre><code>sudo bluetoothctl connect XX:XX:XX:XX:XX:XX</code></pre></div>
+
+      <h3>扫描结果太多怎么办</h3>
+      <p>先在 <code>[bluetooth]#</code> 里找 <code>[NEW] Device ... 小米蓝牙手柄</code> 或 <code>Icon: input-gaming</code>。不要为了过滤先退出配对流程。确实需要过滤时，<code>scan off</code> 后退出到普通 shell：</p>
+      <div class="cmd"><div class="bar"><span>bash · 板子</span><button class="copy" type="button">复制</button></div><pre><code>bluetoothctl devices 2&gt;&amp;1 | grep -iE "xiaomi|gamepad|joystick|MDZ|手柄|小米"</code></pre></div>
+      <p>也可以只看经典蓝牙：</p>
+      <div class="cmd"><div class="bar"><span>bash · 板子</span><button class="copy" type="button">复制</button></div><pre><code>sudo hcitool scan</code></pre></div>
+
+      <div class="callout info"><b>没看到设备？</b>确认手柄灯在快闪；<code>scan off</code> 再 <code>scan on</code>；手柄不要同时连着手机/电视；换新 AA 电池。板子放在手柄旁边。</div>
+
+      <label class="check"><input type="checkbox" data-id="s1-seen"><span>板子扫描到了手柄 MAC。</span></label>
+      <label class="check"><input type="checkbox" data-id="s1-paired"><span>配对成功，<code>Connected: yes</code>，并已 <code>trust</code>。</span></label>
+      <label class="check"><input type="checkbox" data-id="s1-reconnect"><span>关手柄再开，能自动回连。</span></label>
+    </section>
+
+    <section class="step" id="step2">
+      <div class="step-top">
+        <div class="num">03</div>
+        <div>
+          <h2>装驱动 + 键位验收：把乱码手柄变成标准虚拟手柄</h2>
+          <div class="where">时间 20–30 分钟 · Part I 的最后一关 · 不接机器人</div>
+        </div>
+      </div>
+
+      <p class="lead">小米一代的原始 HID 报告不是标准手柄布局。内核通用 HID 常见结果是：A/B/X/Y 错位、右摇杆不动、没有震动。这里不写新驱动，直接复用现成的开源用户态驱动。完成后手柄自己就是一个标准虚拟手柄，本部分到这里结束。</p>
+
+      <div class="callout info"><b>驱动做什么</b>读取真实手柄的 <code>/dev/hidrawN</code>，用 <code>EVIOCGRAB</code> 抓住错误的内核节点，再通过 <code>uinput</code> 提供一个干净的 <b>Microsoft X-Box 360 pad</b>（<code>045e:028e</code>）。Part II 的 padd 会看到这个标准手柄。</div>
+
+      <p>项目地址：<a href="https://github.com/diegryllid/xiaomi_gamepad_linux" target="_blank" rel="noopener">diegryllid/xiaomi_gamepad_linux</a>，支持 VID/PID <code>2717:3144</code>，MIT 许可。</p>
+
+      <h3>1. 在板子上装依赖</h3>
+      <div class="cmd"><div class="bar"><span>bash · 板子</span><button class="copy" type="button">复制</button></div><pre><code>sudo apt update
+sudo apt install -y python3-evdev evtest joystick git
+sudo modprobe uinput
+ls -l /dev/uinput</code></pre></div>
+      <p>没有 <code>/dev/uinput</code> 时，先确认内核模块 <code>uinput</code> 存在；这是驱动创建虚拟手柄的必要条件。</p>
+
+      <h3>2. 安装驱动</h3>
+      <div class="cmd"><div class="bar"><span>bash · 板子</span><button class="copy" type="button">复制</button></div><pre><code>cd ~
+git clone https://github.com/diegryllid/xiaomi_gamepad_linux
+cd xiaomi_gamepad_linux
+sudo ./install.sh</code></pre></div>
+      <p>安装脚本会放好 systemd 服务、udev 隐藏规则、<code>uinput</code> 模块加载配置。它是按需服务：手柄连上才启动。</p>
+      <p class="small">板子不能访问 GitHub 时，在 Mac 上 <code>git clone</code> 后把整个目录 <code>scp -r</code> 到板子，再进目录执行 <code>sudo ./install.sh</code>。</p>
+
+      <h3>3. 让手柄重新连接并验证</h3>
+      <div class="cmd"><div class="bar"><span>bash · 板子</span><button class="copy" type="button">复制</button></div><pre><code>sudo udevadm control --reload
+sudo udevadm trigger --subsystem-match=hidraw --action=add
+systemctl status xiaomi-gamepad --no-pager
+journalctl -u xiaomi-gamepad -n 40 --no-pager</code></pre></div>
+
+      <p>然后验证虚拟手柄：</p>
+      <div class="cmd"><div class="bar"><span>bash · 板子</span><button class="copy" type="button">复制</button></div><pre><code>sudo python3 ~/xiaomi_gamepad_linux/tools/xiaomi-verify.py
+grep -i -A6 'X-Box 360' /proc/bus/input/devices</code></pre></div>
+
+      <div class="callout stop"><b>虚拟手柄没出现时</b>先看真实日志：<code>sudo journalctl -u xiaomi-gamepad -b -n 80 --no-pager</code>。还没有结果就停服务，前台跑一遍：<code>sudo systemctl stop xiaomi-gamepad</code>，再 <code>sudo /usr/bin/python3 /usr/local/bin/xiaomi-gamepad.py</code>。正常会依次打印 <code>daemon started</code>、<code>pad found</code>、<code>virtual pad up</code>。</div>
+
+      <div class="callout info"><b>不要用 by-id 判断</b><code>uinput</code> 创建的标准虚拟手柄 通常不会出现在 <code>/dev/input/by-id/</code>，所以那里没有该设备是正常的。用 <code>/proc/bus/input/devices</code> 或 <code>xiaomi-verify.py</code> 判断。</div>
+      <p>按每个键，脚本应打印对应的控制。看到 <b>Microsoft X-Box 360 pad</b> 才算成功。</p>
+
+      <div class="callout ok"><b>Part I 完成</b>如果 A/B/X/Y、十字、L1/R1、L2/R2、左右摇杆、Start/Select 都能逐项打印，按 <code>Ctrl+C</code> 退出验证脚本，保持 <code>xiaomi-gamepad</code> 服务运行。Part II 重启 <code>padd</code>，做服务联动。</div>
+
+      <div class="callout warn"><b>journalctl 要加 sudo</b>不加 <code>sudo</code> 时，<code>journalctl -u xiaomi-gamepad</code> 可能只显示 <code>No entries</code>，因为服务是 root 跑的。用 <code>sudo journalctl -u xiaomi-gamepad -b -n 80 --no-pager</code> 看真实日志。</div>
+
+      <div class="callout stop"><b>UInput max_effects 报错</b>如果日志出现 <code>UInput.__init__() got an unexpected keyword argument 'max_effects'</code>，是板上的 python-evdev 不支持这个参数，不是手柄问题。备份后删掉该参数并重启：<br><code>sudo cp /usr/local/bin/xiaomi-gamepad.py /usr/local/bin/xiaomi-gamepad.py.bak</code><br><code>sudo sed -i "s/, max_effects=16//" /usr/local/bin/xiaomi-gamepad.py</code><br><code>sudo systemctl restart xiaomi-gamepad</code></div>
+
+      <h3>4. 通过标准</h3>
+      <table>
+        <tr><th>检查</th><th>期望</th></tr>
+        <tr><td>虚拟设备</td><td><code>Microsoft X-Box 360 pad</code>，VID/PID <code>045e:028e</code></td></tr>
+        <tr><td>左摇杆</td><td>X/Y 连续、无跳变</td></tr>
+        <tr><td>右摇杆</td><td>X/Y 连续，不再“死右摇杆”</td></tr>
+        <tr><td>A/B/X/Y</td><td>位置与手柄丝印一致</td></tr>
+        <tr><td>Start/Select</td><td>能稳定触发</td></tr>
+        <tr><td>真实手柄节点</td><td>被 udev 隐藏为 root-only；后续 padd 只应看到标准虚拟手柄</td></tr>
+      </table>
+
+      <div class="callout warn"><b>装不上时</b>先查 <code>python3-evdev</code>、<code>/dev/uinput</code>、<code>udev</code> 和 <code>systemctl status xiaomi-gamepad</code>；先修依赖，不要换手柄。</div>
+
+      <h3>5. 震动 / 保活（正常现象）</h3>
+      <p>这只手柄只在输入变化时上报；空闲时链路会静默，约 2 分钟后可能 <code>Input/output error</code> 断连。驱动必须周期性写 <code>0x20 01 01</code> 保活。</p>
+
+      <div class="callout warn"><b>持续轻微嗡嗡响是正常的</b>保活包会驱动马达，所以空闲时手柄会持续轻微嗡嗡响。这不是驱动故障，也不是电池问题，是保活的副作用。</div>
+
+      <p>如果驱动被改过，保持原逻辑即可：</p>
+      <div class="cmd"><div class="bar"><span>python · 原保活</span><button class="copy" type="button">复制</button></div><pre><code>RUMBLE_STOP = bytes([0x20, 0x01, 0x01])
+KEEPALIVE_S = 2.0
+
+# 空闲时每 KEEPALIVE_S 发一次 RUMBLE_STOP</code></pre></div>
+
+      <div class="callout stop"><b>不要这样改</b>不要把保活包改成 <code>0x20 00 00</code>（会关机），也不要完全关闭 keepalive（约 2 分钟就掉线）。<b>目前没有“既安静又永久在线”的软件包。</b></div>
+
+      <p>如果无法接受嗡嗡声，只能二选一：</p>
+      <ul>
+        <li>拆掉手柄震动马达，继续用 <code>0x20 01 01</code> 保活；</li>
+        <li>接受空闲约 2 分钟自动关机，需要时重新开机。</li>
+      </ul>
+
+      <div class="callout stop"><b>电池</b>原作者明确记录：弱 AA 电池 + 马达启动电流会让这只手柄“假死/掉线”。测试用新碱性电池或低内阻 NiMH，并且<b>不要开震动</b>。</div>
+
+      <label class="check"><input type="checkbox" data-id="s2-deps"><span>板子有 <code>python3-evdev</code>、<code>/dev/uinput</code>，驱动安装成功。</span></label>
+      <label class="check"><input type="checkbox" data-id="s2-service"><span><code>xiaomi-gamepad</code> 服务在连接手柄后运行，日志无报错。</span></label>
+      <label class="check"><input type="checkbox" data-id="s2-virtual"><span>出现 <code>Microsoft X-Box 360 pad</code> 虚拟设备。</span></label>
+      <label class="check"><input type="checkbox" data-id="s2-controls"><span>左右摇杆、A/B/X/Y、Start/Select 全部通过 <code>xiaomi-verify.py</code> 验证。</span></label>
+      <label class="check"><input type="checkbox" data-id="s2-part1"><span><b>PART I 完成：</b>不接机器人、不启动策略，手柄本身已可作为标准虚拟手柄 使用。</span></label>
+    </section>
+
+    <section class="parthead" id="part2">
+      <div class="pk">PART II · 再让手柄控制机器人</div>
+      <h2>手柄独立可用之后，才接入 padd 和 robotd</h2>
+      <p>从这里开始机器人必须处于支撑或卸力状态。先把标准虚拟手柄 的语义映射到 padd，再按低速度、急停、掉线、技能的顺序逐步放开。</p>
+      <div class="split">
+        <span>机器人支撑/卸力</span><span>先联动后驾驶</span><span>技能键最后碰</span>
+      </div>
+    </section>
+
+    <section class="step" id="step3">
+      <div class="step-top">
+        <div class="num">04</div>
+        <div>
+          <h2>接入机器人：padd 服务联动</h2>
+          <div class="where">时间 30–45 分钟 · 从这里才开始用机器人 · 先支撑/卸力</div>
+        </div>
+      </div>
+
+      <div class="callout stop"><b>PART II 开始</b>机器人必须在软垫上或由人扶住，舵机不上力；先确认手柄已经被 padd 看到，再谈驾驶。任何“让它走一下试试”都必须等站立和急停测试完成。</div>
+
+      <div class="callout info"><b>先纠正一个误区</b>当前 <code>padd</code> 使用<b>内置映射</b>，不读额外映射文件，也没有独立的映射页面。手柄只要变成标准虚拟手柄 并被 <code>padd</code> 看到，就已经接入了机器人服务。</div>
+
+      <h3>确认服务联动</h3>
+      <div class="cmd"><div class="bar"><span>bash · 板子</span><button class="copy" type="button">复制</button></div><pre><code>systemctl is-active xiaomi-gamepad padd
+systemctl is-enabled xiaomi-gamepad
+sudo journalctl -u padd -n 30 --no-pager | \
+  grep -E "pad connected|pad gone"</code></pre></div>
+
+      <p>必须看到：</p>
+      <ul>
+        <li><code>xiaomi-gamepad</code> 和 <code>padd</code> 都是 <b>active</b></li>
+        <li><code>xiaomi-gamepad</code> 是 <b>enabled</b>，重启后仍会启动</li>
+        <li><code>padd</code> 日志出现 <code>pad connected — driving pad="Xbox 360 Controller"</code></li>
+      </ul>
+
+      <p>如果服务是 <code>static</code> 或重启后不启动，创建启动链接：</p>
+      <div class="cmd"><div class="bar"><span>bash · 板子</span><button class="copy" type="button">复制</button></div><pre><code>sudo mkdir -p /etc/systemd/system/multi-user.target.wants
+sudo ln -sf /etc/systemd/system/xiaomi-gamepad.service \
+  /etc/systemd/system/multi-user.target.wants/xiaomi-gamepad.service
+systemctl is-enabled xiaomi-gamepad</code></pre></div>
+
+      <h3>只保留一个输入源</h3>
+      <ul>
+        <li>断开其他蓝牙手柄、网页虚拟手柄。</li>
+        <li>只让小米手柄连接板子；<code>padd</code> 只应看到标准虚拟手柄。</li>
+        <li>不要同时开 <code>evtest</code> 和 <code>padd</code>。</li>
+      </ul>
+
+      <h3>小米手柄键位 → 动作语义</h3>
+      <p>下表按<b>小米手柄丝印</b>写，不按另一套手柄布局。驱动已经把丝印校正成 <code>padd</code> 能识别的标准手柄；按键动作以这张表为准。</p>
+      <table>
+        <tr><th>小米手柄</th><th>机器人动作</th><th>备注</th></tr>
+        <tr><td>左摇杆</td><td>前进 / 后退 / 左右横移</td><td>首次只轻推，确认方向</td></tr>
+        <tr><td>右摇杆左右</td><td>转向</td><td>首次只轻推，确认左右</td></tr>
+        <tr><td>Y</td><td>头部模式</td><td>只动头，不动腿</td></tr>
+        <tr><td>B</td><td>身体姿态模式</td><td>需要腿部空间</td></tr>
+        <tr><td>A</td><td>地面捡起</td><td>策略未配置时会被拒绝</td></tr>
+        <tr><td>L1 / R1</td><td>左 / 右踢</td><td>技能键，最后再试</td></tr>
+        <tr><td>L2 / R2</td><td>嘴开合</td><td>两侧扳机控制嘴</td></tr>
+        <tr><td>十字键下</td><td>坐下</td><td>先手扶确认能坐</td></tr>
+        <tr><td>十字键上（3 秒）</td><td>walk / roller 切换</td><td>容易误触，先不碰</td></tr>
+        <tr><td>Start</td><td>切换策略 / 站立</td><td>机器人先支撑或软垫</td></tr>
+        <tr><td>Select（长按 2 秒）</td><td>关机</td><td><b>不是急停</b></td></tr>
+        <tr><td>X</td><td>不绑定</td><td>按下不应触发技能</td></tr>
+        <tr><td>Home / Mi</td><td>不绑定</td><td>避免系统键干扰</td></tr>
+      </table>
+
+      <div class="callout stop"><b>安全边界</b><code>Select</code> 是长按关机，不是急停；真正的安全边界是：机器人先支撑/软垫、首次只轻推摇杆、手边随时能断电。A/B/Y/L1/R1 这些技能键在站立和低速驾驶通过前不要按。</div>
+
+      <h3>联动验收</h3>
+      <label class="check"><input type="checkbox" data-id="s3-link"><span><code>xiaomi-gamepad</code> active + enabled，<code>padd</code> active。</span></label>
+      <label class="check"><input type="checkbox" data-id="s3-pad"><span><code>padd</code> 日志出现 <code>pad connected</code>，且只看到一个标准虚拟手柄。</span></label>
+      <label class="check"><input type="checkbox" data-id="s3-map"><span>已确认 <code>padd</code> 使用内置映射，不需要额外映射文件；按键语义按当前日志为准。</span></label>
+      <label class="check"><input type="checkbox" data-id="s3-safety"><span>机器人已支撑/软垫，知道 <code>Select</code> 是关机不是急停；技能键未按。</span></label>
+    </section>
+
+    <section class="step" id="step4">
+      <div class="step-top">
+        <div class="num">05</div>
+        <div>
+          <h2>安全驾驶：先站起来，再走 1 米</h2>
+          <div class="where">时间 20–30 分钟 · 软垫 / 空旷地面 · 人站在旁边</div>
+        </div>
+      </div>
+
+      <ol>
+        <li>机器人放平，周围 1 m 清空；手柄握在手里，先不要碰摇杆。</li>
+        <li>按 <b>Start</b>：第一下回 HOME；等机器人站稳，再按第二下启用策略。</li>
+        <li>轻推左摇杆 Y，确认前进方向；如果反了，先停下检查，不要靠“习惯反着推”。</li>
+        <li>轻推左摇杆 X，确认横移方向；再推右摇杆 X，确认转向方向。</li>
+        <li>先用 <b>0.10 m/s</b>、转向 <b>0.5 rad/s</b>，走 1 m，停。</li>
+        <li>摇杆回中，确认机器人能停住，不会继续走。</li>
+      </ol>
+
+      <div class="callout warn"><b>速度不要一次拉满</b>默认上限约 0.30 m/s / 1.5 rad/s。第一阶段只用 1/3，确认方向、死区、刹车都正常。</div>
+
+      <p>如果方向正确、能停、无抖动，才进入物理断电测试。</p>
+
+      <label class="check"><input type="checkbox" data-id="s4-stand"><span>Start 两段式能正常 HOME + 启用策略。</span></label>
+      <label class="check"><input type="checkbox" data-id="s4-vx"><span>左摇杆 Y 前进/后退方向正确。</span></label>
+      <label class="check"><input type="checkbox" data-id="s4-vy"><span>左摇杆 X 横移方向正确。</span></label>
+      <label class="check"><input type="checkbox" data-id="s4-wz"><span>右摇杆 X 转向方向正确。</span></label>
+      <label class="check"><input type="checkbox" data-id="s4-stop"><span>摇杆回中后能停住，1 米内不失控。</span></label>
+    </section>
+
+    <section class="step" id="step5">
+      <div class="step-top">
+        <div class="num">06</div>
+        <div>
+          <h2>deadman、掉线、物理断电：先把最坏情况测掉</h2>
+          <div class="where">时间 20–30 分钟 · 软垫 / 空地 · 不做技能</div>
+        </div>
+      </div>
+
+      <h3>1. Deadman 和断线</h3>
+      <p>轻推摇杆走起来，然后松手回中。机器人应在 deadman 窗口内停止/减速，不能持续走。测试 5 次。</p>
+      <p>机器人站立，直接关掉手柄电源。应在约 1–1.5 秒内自动坐下或停止；重新开手柄，确认能回连。测试 3 次。</p>
+
+      <h3>2. Select 是关机，不是急停</h3>
+      <p><b>长按 Select 2 秒会关机。</b>不要把它当急停键，也不要在机器人行走时测试。急停测试用物理断电：手边保持电池插头/总开关能一手断开。</p>
+
+      <h3>3. 随机输入</h3>
+      <p>机器人站立，随机按 100 次（不要按 A/B/Y/L1/R1 技能键，不要让它走）。确认不出现未预期的模式/技能。</p>
+
+      <table>
+        <tr><th>测试</th><th>通过标准</th><th>结果</th></tr>
+        <tr><td>Deadman</td><td>松手后 0.5 s 左右停止</td><td></td></tr>
+        <tr><td>关手柄</td><td>1–1.5 s 内坐下/停止，不冲</td><td></td></tr>
+        <tr><td>重连</td><td>开机自动回连，不重复配对</td><td></td></tr>
+        <tr><td>随机输入</td><td>无未绑定技能触发</td><td></td></tr>
+        <tr><td>物理断电</td><td>一手能断，断后不冲</td><td></td></tr>
+      </table>
+
+      <div class="callout stop"><b>物理急停</b>软件里没有独立的“Select 急停”。最后一道保险始终是电池插头/电源开关；测试时人不要站在机器人正前方。</div>
+
+      <label class="check"><input type="checkbox" data-id="s5-deadman"><span>Deadman 5/5 通过。</span></label>
+      <label class="check"><input type="checkbox" data-id="s5-drop"><span>关手柄 3/3 能坐下/停止，重连正常。</span></label>
+      <label class="check"><input type="checkbox" data-id="s5-random"><span>100 次随机输入没有误触模式/技能。</span></label>
+      <label class="check"><input type="checkbox" data-id="s5-power"><span>知道 Select 长按是关机；物理断电一手可断。</span></label>
+    </section>
+
+    <section class="step" id="step6">
+      <div class="step-top">
+        <div class="num">07</div>
+        <div>
+          <h2>模式/技能：最后验证，一次只试一个</h2>
+          <div class="where">时间 45–60 分钟 · 软垫、球、清空 1 m</div>
+        </div>
+      </div>
+
+      <p>先说明：<b><code>padd</code> 使用内置映射，没有额外的绑技能页或映射文件。</b>下面按当前日志里的实际语义逐个验证，不要按手柄字母猜。</p>
+
+      <table>
+        <tr><th>按键</th><th>当前实际行为</th><th>前提</th><th>测试</th></tr>
+        <tr><td>Y</td><td>头部模式</td><td>站立/支撑，周围无遮挡</td><td>只动头，腿不动</td></tr>
+        <tr><td>B</td><td>身体姿态模式</td><td>软垫，腿部空间足够</td><td>不突然站起/前扑</td></tr>
+        <tr><td>A</td><td>地面捡起技能</td><td>站立、前方无遮挡、策略已启用</td><td>失败时只拒绝，不猛动</td></tr>
+        <tr><td>L1 / R1</td><td>左 / 右踢</td><td>站立、周围 1 m 清空</td><td>不误触、不连续踢</td></tr>
+        <tr><td>十字下</td><td>坐下</td><td>先手扶确认能坐下</td><td>缓慢坐，不砸地</td></tr>
+        <tr><td>十字上（3 秒）</td><td>walk / roller 切换</td><td>最后再试</td><td>不误触</td></tr>
+        <tr><td>X</td><td><b>不绑定</b></td><td>—</td><td>按了也不应有技能</td></tr>
+      </table>
+
+      <div class="callout stop"><b>不要一次试全部</b>先 Y（只动头），再十字下（坐下），再 B；A/L1/R1 最后。X 不绑定，不要为了“试试”去按。</div>
+
+      <p>技能只允许在“站立 + 摇杆回中”时触发。不要做组合键；组合键在紧张时更容易按错。</p>
+
+      <label class="check"><input type="checkbox" data-id="s6-y"><span>Y = 头部模式，只动头，腿不动。</span></label>
+      <label class="check"><input type="checkbox" data-id="s6-sit"><span>十字下 = 坐下，缓慢不砸地。</span></label>
+      <label class="check"><input type="checkbox" data-id="s6-b"><span>B = 身体姿态，站立时不突然前扑。</span></label>
+      <label class="check"><input type="checkbox" data-id="s6-a"><span>A / L1 / R1 技能单独验证，无未预期动作。</span></label>
+      <label class="check"><input type="checkbox" data-id="s6-x"><span>X 不绑定，按下不触发技能。</span></label>
+    </section>
+
+    <section class="step" id="step7">
+      <div class="step-top">
+        <div class="num">08</div>
+        <div>
+          <h2>最终验收：能不能算“落地完成”</h2>
+          <div class="where">时间 45–60 分钟 · 完整整机</div>
+        </div>
+      </div>
+
+      <table>
+        <tr><th>验收项</th><th>标准</th><th>结果</th></tr>
+        <tr><td>配对</td><td>10/10 次开机自动回连</td><td></td></tr>
+        <tr><td>输入</td><td>左右摇杆、十字、Start/Select 全部稳定</td><td></td></tr>
+        <tr><td>驾驶</td><td>3 m 直线不跑偏；10 m 不失控</td><td></td></tr>
+        <tr><td>转向</td><td>左右 90° 可控，不突然加速</td><td></td></tr>
+        <tr><td>物理断电</td><td>一手能断；断后不冲</td><td></td></tr>
+        <tr><td>掉线</td><td>关手柄 1–1.5 s 内坐下/停止</td><td></td></tr>
+        <tr><td>模式/技能</td><td>Y / 十字下 / B / A / L1 / R1 按实际语义验证</td><td></td></tr>
+        <tr><td>续航</td><td>连续 1 小时，低电报警前完成</td><td></td></tr>
+        <tr><td>记录</td><td>MAC、padd 版本、服务 enabled 状态、测试结果齐全</td><td></td></tr>
+      </table>
+
+      <h3>落地记录</h3>
+      <table>
+        <tr><th>字段</th><th>值</th></tr>
+        <tr><td>手柄 MAC</td><td></td></tr>
+        <tr><td>padd 版本</td><td></td></tr>
+        <tr><td>xiaomi-gamepad enabled</td><td>是 / 否</td></tr>
+        <tr><td>测试日期 / 测试人</td><td></td></tr>
+        <tr><td>最终结论</td><td>通过 / 有条件通过 / 未通过</td></tr>
+      </table>
+
+      <label class="check"><input type="checkbox" data-id="s7-10m"><span>10 m 行走 + 90° 转向通过。</span></label>
+      <label class="check"><input type="checkbox" data-id="s7-safety"><span>急停、掉线、随机输入全部通过。</span></label>
+      <label class="check"><input type="checkbox" data-id="s7-skills"><span>Y / 十字下 / B / A / L1 / R1 按实际语义验证；X 不绑定。</span></label>
+      <label class="check"><input type="checkbox" data-id="s7-record"><span>MAC、padd 版本、服务 enabled 状态和测试记录已保存。</span></label>
+      <label class="check"><input type="checkbox" data-id="s7-done"><span><b>落地完成：机器人可以只靠这只手柄安全驾驶并执行技能。</b></span></label>
+    </section>
+
+    <section class="step finish" id="reference">
+      <div class="step-top">
+        <div class="num">REF</div>
+        <div>
+          <h2>规格、默认语义、风险与回滚</h2>
+          <div class="where">收尾时对照</div>
+        </div>
+      </div>
+
+      <h3>小米蓝牙手柄一代</h3>
+      <table>
+        <tr><th>项目</th><th>值</th></tr>
+        <tr><td>蓝牙</td><td>Bluetooth 3.0（经典蓝牙，不是 BLE）</td></tr>
+        <tr><td>电源</td><td>2 × AA</td></tr>
+        <tr><td>距离</td><td>约 10 m</td></tr>
+        <tr><td>传感器</td><td>3 轴 G-sensor（本方案不使用）</td></tr>
+        <tr><td>震动</td><td>双马达（测试时关闭）</td></tr>
+        <tr><td>续航</td><td>不震动约 80 h；全速震动约 4 h</td></tr>
+      </table>
+      <p class="small">规格来源：<a href="https://www.mi.com/shb/specs" target="_blank" rel="noopener">小米蓝牙手柄参数页</a>。驱动：<a href="https://github.com/diegryllid/xiaomi_gamepad_linux" target="_blank" rel="noopener">diegryllid/xiaomi_gamepad_linux</a>（VID/PID <code>2717:3144</code>）。</p>
+
+      <h3>现有机器人默认语义</h3>
+      <ul>
+        <li>左摇杆：前进 / 后退 / 横移；右摇杆左右：转向。</li>
+        <li>Start：切换策略 / 站立。</li>
+        <li>Y：头部模式；B：身体姿态；A：地面捡起。</li>
+        <li>L1 / R1：左 / 右踢；L2 / R2：嘴开合。</li>
+        <li>十字键下：坐下；十字键上 3 秒：walk / roller 切换。</li>
+        <li>Select 长按 2 秒：关机，不是急停。</li>
+        <li>X、Home / Mi：不绑定。</li>
+        <li>断手柄约 1 秒：机器人停止；deadman 约 500 ms。</li>
+      </ul>
+
+      <h3>风险表</h3>
+      <table>
+        <tr><th>风险</th><th>概率</th><th>处理</th></tr>
+        <tr><td>内核 HID 映射错 / 右摇杆死</td><td>高</td><td>安装 <code>xiaomi-gamepad</code> 用户态驱动，不要用原始节点</td></tr>
+        <tr><td>按键映射和手柄丝印不一致</td><td>中</td><td>按 evtest 原始码重绑，不看字母</td></tr>
+        <tr><td>把 Select 当急停</td><td>高</td><td>Select 是长按关机；急停用物理断电</td></tr>
+        <tr><td>技能键误触</td><td>中</td><td>A/B/Y/L1/R1 最后逐个验证</td></tr>
+        <tr><td>AA 电池低电导致掉线</td><td>中</td><td>新碱性电池；关震动；关手柄自动坐下</td></tr>
+        <tr><td>蓝牙 2.4G 干扰</td><td>中</td><td>缩短距离、换 Wi-Fi 信道、靠近板子</td></tr>
+      </table>
+
+      <h3>回滚</h3>
+      <div class="cmd"><div class="bar"><span>bash · 板子</span><button class="copy" type="button">复制</button></div><pre><code>sudo systemctl stop padd
+sudo systemctl stop xiaomi-gamepad
+sudo systemctl disable xiaomi-gamepad
+</code></pre></div>
+      <p>要恢复时重新 <code>systemctl enable --now xiaomi-gamepad</code>，再启动 <code>padd</code>。</p>
+
+      <div class="callout ok"><b>完成标志</b>手柄只负责“意图”，robotd 仍然负责 deadman、限速和安全。你不需要为了手柄改控制核心；能把标准 HID 事件稳定映射到 padd，就已经落地。</div>
+    </section>
+
+    <footer class="footer">
+      <p>本手册按 2026-11-12 的机器人软件与小米手柄一代规格整理。具体 <code>padd</code> / 镜像版本不同，按键语义可能有差异；以 <code>padd</code> 日志里的 driving 行和实际动作为准。</p>
+    </footer>
+  </main>
+</div>
+
+<script>
+(function(){
+  var KEY = 'omd.gamepad.guide.v1';
+  var boxes = Array.prototype.slice.call(document.querySelectorAll('input[type="checkbox"][data-id]'));
+  var pbar = document.getElementById('pbar');
+  var pcount = document.getElementById('pcount');
+  var state = {};
+
+  try { state = JSON.parse(localStorage.getItem(KEY) || '{}') || {}; } catch(e) { state = {}; }
+
+  function save(){
+    try { localStorage.setItem(KEY, JSON.stringify(state)); } catch(e) {}
+  }
+  function update(){
+    var done = 0;
+    boxes.forEach(function(b){
+      if (state[b.dataset.id]) b.checked = true;
+      if (b.checked) done++;
+    });
+    var total = boxes.length;
+    var pct = total ? Math.round(done * 100 / total) : 0;
+    if (pbar) pbar.style.width = pct + '%';
+    if (pcount) pcount.textContent = done + ' / ' + total + ' · ' + pct + '%';
+  }
+
+  boxes.forEach(function(b){
+    b.addEventListener('change', function(){
+      if (b.checked) state[b.dataset.id] = true;
+      else delete state[b.dataset.id];
+      save();
+      update();
+    });
+  });
+
+  var reset = document.getElementById('resetBtn');
+  if (reset) reset.addEventListener('click', function(){
+    if (!window.confirm('清空本页所有勾选和进度？')) return;
+    state = {};
+    try { localStorage.removeItem(KEY); } catch(e) {}
+    boxes.forEach(function(b){ b.checked = false; });
+    update();
+    window.scrollTo({top:0,behavior:'smooth'});
+  });
+
+  var print = document.getElementById('printBtn');
+  if (print) print.addEventListener('click', function(){ window.print(); });
+
+  document.querySelectorAll('.copy').forEach(function(btn){
+    btn.addEventListener('click', function(){
+      var pre = btn.closest('.cmd').querySelector('pre');
+      var text = pre ? pre.innerText : '';
+      var done = function(){ var old = btn.textContent; btn.textContent = '已复制'; setTimeout(function(){ btn.textContent = old; }, 1200); };
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text).then(done).catch(function(){ fallback(text, done); });
+      } else {
+        fallback(text, done);
+      }
+    });
+  });
+
+  function fallback(text, done){
+    var ta = document.createElement('textarea');
+    ta.value = text;
+    ta.style.position = 'fixed';
+    ta.style.opacity = '0';
+    document.body.appendChild(ta);
+    ta.select();
+    try { document.execCommand('copy'); done(); } catch(e) {}
+    document.body.removeChild(ta);
+  }
+
+  update();
+})();
+</script>
+</body>
+</html>
