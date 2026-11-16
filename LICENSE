@@ -1,29 +1,21 @@
-本仓库采用双许可证 / This repository is dual-licensed:
+This repository is dual-licensed:
 
-1. 软件部分 —— Apache License 2.0
-   Software — Apache License 2.0
-   全文见 LICENSE-APACHE-2.0.txt / See LICENSE-APACHE-2.0.txt
+1. Software — Apache License 2.0
+   See LICENSE-APACHE-2.0.txt.
 
-2. 硬件和图纸 ——
-   Creative Commons Attribution-ShareAlike-NonCommercial 4.0 (CC BY-SA-NC 4.0)
-   这些是 Pollen Robotics 的 Microduck 3D 模型（CC BY-SA-NC）的衍生作品，
-   依据 ShareAlike 条款必须沿用相同许可证。
+2. Hardware and drawings — Creative Commons Attribution-NonCommercial-ShareAlike 4.0
+   All content under assembly-drawings/ and cad/ consists of derivative works of
+   Pollen Robotics' Microduck 3D models and is released under the same license
+   as required by the ShareAlike term.
 
-   All content under assembly-drawings/ and cad/ are derivative works of
-   Pollen Robotics' Microduck 3D models (CC BY-SA-NC) and are therefore
-   released under the same license as required by the ShareAlike term.
-
-   CC BY-SA-NC 4.0 全文: https://creativecommons.org/licenses/by-nc-sa/4.0/
-   仓库内副本见 LICENSE-CC-BY-NC-SA-4.0.txt
+   Full license: https://creativecommons.org/licenses/by-nc-sa/4.0/
+   Local copy: LICENSE-CC-BY-NC-SA-4.0.txt
    Official SPDX identifier: CC-BY-NC-SA-4.0
 
-非商用声明 / Non-commercial notice
+Non-commercial notice
 
-上游 3D 模型采用 CC BY-SA-NC，其衍生作品不得用于商业目的。
-本仓库仅供学习、研究与个人复刻使用。
+The upstream 3D models and their derivatives may not be used for commercial
+purposes. This repository is provided for learning, research, and personal
+recreation.
 
-Upstream 3D models are licensed under CC BY-SA-NC; derivative works may
-not be used for commercial purposes. This repository is provided for
-learning, research, and personal recreation only.
-
-详见 NOTICE.md / See NOTICE.md for full attribution.
+See NOTICE.md for attribution.

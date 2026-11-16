@@ -33,12 +33,12 @@ APP_DIR = Path(__file__).resolve().parent
 
 ROLES = ("walk", "stand", "sitstand", "ground_pick", "kick_right", "roulade")
 MODE_LABELS = {
-    "stand": "站立",
-    "walk": "行走",
-    "sitstand": "坐站",
-    "ground_pick": "捡拾",
-    "kick_right": "右踢",
-    "roulade": "前滚翻",
+    "stand": "Stand",
+    "walk": "Walk",
+    "sitstand": "Sit / stand",
+    "ground_pick": "Pick up",
+    "kick_right": "Right kick",
+    "roulade": "Forward roll",
 }
 JOINT_NAMES = [
     "left_hip_yaw", "left_hip_roll", "left_hip_pitch", "left_knee", "left_ankle",
@@ -91,7 +91,7 @@ HEAD_JOINT_IDX = (5, 6, 7, 8)  # neck_pitch, head_pitch, head_yaw, head_roll
 DEPLOY_LEGS_LOWPASS = 0.7
 DEPLOY_HEAD_LOWPASS = 0.5
 
-# Deployment defaults for every live-tunable knob, so "恢复默认值" can restore
+# Deployment defaults for every live-tunable knob, so "Restore defaults" can restore
 # the whole panel (not just the smoothing sliders) to the board config values.
 DEPLOY_WALK_VX = 0.16
 DEPLOY_KICK_DURATION = 0.5
@@ -405,7 +405,7 @@ class MotionLab:
         self.reset()
         self.pending_mode = "roulade"
         self.pending_timer = self.roulade_prep
-        self.event = "调整站姿，准备前滚翻"
+        self.event = "Settling into the starting pose for a forward roll"
 
     def _configure_collisions(self, profile="support"):
         """Apply the authored full collision model or the kick's floor-only subset.
@@ -527,7 +527,7 @@ class MotionLab:
             self.standup_timer = 0.0
             self.fall_timer = 0.0
             self.auto_reset_count = 0
-            self.event = "已重置到默认站姿"
+            self.event = "Reset to the default standing pose"
 
     def _activate(self, mode):
         if mode not in ROLES:
@@ -633,7 +633,7 @@ class MotionLab:
         self._activate("sitstand")
         self.sit_nudge_timer = 0.0
         self.standup_timer = self.standup_handoff
-        self.event = "站起"
+        self.event = "Stand up"
 
     def set_mode(self, mode, sit=None):
         with self.lock:
@@ -651,7 +651,7 @@ class MotionLab:
                     self._activate("sitstand")
                     if not was_sit:
                         self.sit_nudge_timer = self.sit_nudge
-                    self.event = "坐下"
+                    self.event = "Sit down"
                 else:
                     self._begin_standup()
                 return True, self.event
@@ -670,12 +670,12 @@ class MotionLab:
                 self.pending_mode = mode
                 self.pending_timer = 2.0
                 self._begin_standup()
-                self.event = f"先站起，再进入{MODE_LABELS.get(mode, mode)}"
+                self.event = f"Stand up first, then switch to {MODE_LABELS.get(mode, mode)}"
                 return True, self.event
 
             self.pending_mode = None
             self._activate(mode)
-            self.event = f"切换到{MODE_LABELS.get(mode, mode)}"
+            self.event = f"Switched to {MODE_LABELS.get(mode, mode)}"
             return True, self.event
 
     def toggle_sit(self):
@@ -687,7 +687,7 @@ class MotionLab:
     def toggle_pause(self):
         with self.lock:
             self.paused = not self.paused
-            self.event = "已暂停" if self.paused else "继续播放"
+            self.event = "Paused" if self.paused else "Resume"
             return self.paused
 
     def set_twist(self, vx=None, vy=None, wz=None):
@@ -845,7 +845,7 @@ class MotionLab:
             self.standup_timer -= dt
             if self.standup_timer <= 0.0:
                 self._activate("stand")
-                self.event = "站起完成"
+                self.event = "Finished standing up"
 
         if self.pending_mode is not None and self.mode == "stand":
             self.pending_timer -= dt
@@ -854,7 +854,7 @@ class MotionLab:
                 self.pending_mode = None
                 self._activate(pending)
                 if pending == "roulade":
-                    self.event = "前滚翻中"
+                    self.event = "Rolling forward"
 
         cmd = np.zeros(13, dtype=np.float32)
         cmd[3] = 0.0
@@ -872,7 +872,7 @@ class MotionLab:
             self.ground_phase += dt / 4.0
             if self.ground_phase >= self.ground_pick_duration:
                 self._activate("stand")
-                self.event = "捡拾完成，回到站立"
+                self.event = "Pickup complete; returning to stand"
             else:
                 cmd[0] = math.cos(2.0 * math.pi * self.ground_phase)
                 cmd[1] = math.sin(2.0 * math.pi * self.ground_phase)
@@ -880,12 +880,12 @@ class MotionLab:
             self.behavior_timer -= dt
             if self.behavior_timer <= 0.0:
                 self._activate("stand")
-                self.event = "右踢完成，回到站立"
+                self.event = "Kick complete; returning to stand"
         elif self.mode == "roulade":
             self.behavior_timer -= dt
             if self._roulade_finished() or self.behavior_timer <= 0.0:
                 self._activate("stand")
-                self.event = "前滚翻完成，回到站立"
+                self.event = "Roll complete; returning to stand"
 
         if self.mode in ("kick_right", "roulade"):
             # infer_policy.py: kick/roulade were trained with an all-zero 13D
@@ -901,12 +901,12 @@ class MotionLab:
             obs = self._observations()
             if not np.all(np.isfinite(obs)):
                 self.reset()
-                self.event = "观测出现 NaN，已自动复位"
+                self.event = "NaN in observation; reset automatically"
                 return
             action = policy.act(obs)
             if not np.all(np.isfinite(action)):
                 self.reset()
-                self.event = "策略输出出现 NaN，已自动复位"
+                self.event = "NaN in policy output; reset automatically"
                 return
             action = np.clip(action, -5.0, 5.0)
         self.last_action = action.astype(np.float32)
@@ -949,7 +949,7 @@ class MotionLab:
             if self.fall_timer > self.fall_grace:
                 self.auto_reset_count += 1
                 self.reset()
-                self.event = "检测到失稳，已自动复位"
+                self.event = "Instability detected; reset automatically"
         else:
             self.fall_timer = 0.0
         self._park_ball()
@@ -1016,63 +1016,67 @@ class MotionLab:
     # Chat / command parser (small, deterministic, no cloud model)
     # ------------------------------------------------------------------
     def chat(self, text):
-        t = (text or "").strip()
+        t = " ".join((text or "").casefold().split()).strip(".!? ")
         if not t:
-            return {"reply": "说一句话，例如“站起来”“向前走”“捡东西”。", "action": None}
+            return {"reply": "Try a command: stand up, walk forward, or pick up.", "action": None}
 
         def result(reply, action=None):
             return {"reply": reply, "action": action}
 
-        if any(k in t for k in ("重置", "复位", "恢复")):
-            self.reset()
-            return result("已重置到默认站姿，策略回到站立。", "reset")
+        # Whole phrases avoid matching 'sit' in 'position' or 'roll' in 'controller'.
+        def matches(*phrases):
+            return any(f" {phrase} " in f" {t} " for phrase in phrases)
 
-        if any(k in t for k in ("红球", "球在哪", "球在哪里")):
+        if matches("reset", "restore"):
+            self.reset()
+            return result("Reset to the default pose and standing policy.", "reset")
+        if matches("red ball", "where is the ball", "where's the ball"):
             return result(
-                "场景里有一只 70 mm 的训练用球。平时收在场景外；触发“右踢”时，球会出现在右脚前 9 cm、向右偏 4.2 cm 的位置，踢完留在场上。",
-                None,
+                "The scene has a 70 mm training ball. It stays offstage until a right kick places it "
+                "9 cm in front of the right foot and 4.2 cm to the right. It remains on the floor afterward."
             )
-        if any(k in t for k in ("你是谁", "介绍一下", "你能做什么")):
+        if matches("who are you", "introduce yourself", "what can you do", "help"):
             return result(
-                "我是 OpenMicroDuck 动作实验室的本地回放器：CPU 跑 ONNX，MuJoCo 算物理，浏览器只负责显示。",
-                None,
+                "I am the local OpenMicroDuck Motion Lab player. ONNX runs on the CPU, "
+                "MuJoCo simulates physics, and the browser displays the result. "
+                "Try stand up, sit down, walk forward, stop, pick up, right kick, forward roll, "
+                "look left, look right, center head, or reset."
             )
-        if any(k in t for k in ("坐下", "坐着", "蹲下")):
+        if matches("sit down", "sit", "crouch"):
             self.set_mode("sitstand", sit=True)
-            return result("收到，小鸭正在坐下。", "sit")
-        if any(k in t for k in ("站起", "站起来", "起立", "站立")):
+            return result("The duck is sitting down.", "sit")
+        if matches("stand up", "stand", "get up"):
             self.set_mode("sitstand", sit=False)
-            return result("收到，小鸭正在站起。", "stand_up")
-        if any(k in t for k in ("停", "别动", "停住", "刹车")):
+            return result("The duck is standing up.", "stand_up")
+        if matches("stop", "hold still", "brake"):
             self.set_mode("stand")
             self.set_twist(vx=0.0, vy=0.0, wz=0.0)
-            return result("已停止移动，切换到站立保持。", "stop")
-        if any(k in t for k in ("捡", "抓", "拾取", "拿东西")):
+            return result("Stopped moving; holding a standing pose.", "stop")
+        if matches("pick up", "pickup", "ground pick", "grab"):
             self.set_mode("ground_pick")
-            return result("开始一次捡拾循环，结束后自动回到站立。", "ground_pick")
-        if any(k in t for k in ("踢", "右踢")):
+            return result("Starting one pickup cycle, then returning to stand.", "ground_pick")
+        if matches("right kick", "kick"):
             self.set_mode("kick_right")
-            return result("右踢动作已触发，约 0.5 秒后回到站立。", "kick_right")
-        if any(k in t for k in ("滚", "翻", "前滚翻")):
+            return result("Right kick triggered; returning to stand after about 0.5 seconds.", "kick_right")
+        if matches("forward roll", "roll", "somersault"):
             self.set_mode("roulade")
-            return result("前滚翻已触发：先调整站姿 1 秒，再翻滚约 1 秒。", "roulade")
-        if any(k in t for k in ("走", "前进", "向前", "出发")):
+            return result("Forward roll triggered: settle for about 1 second, then roll for about 1 second.", "roulade")
+        if matches("walk forward", "walk", "move forward", "go forward"):
             self.set_mode("walk")
             self.set_twist(vx=self.walk_default_vx, vy=0.0, wz=0.0)
-            return result(f"开始向前走，速度指令 {self.walk_default_vx:.2f} m/s。", "walk")
-        if any(k in t for k in ("左看", "看左", "向左")):
+            return result(f"Walking forward at a commanded {self.walk_default_vx:.2f} m/s.", "walk")
+        if matches("look left", "head left"):
             self.set_head(yaw=0.65)
-            return result("头部向左看。", "head_left")
-        if any(k in t for k in ("右看", "看右", "向右")):
+            return result("Looking left.", "head_left")
+        if matches("look right", "head right"):
             self.set_head(yaw=-0.65)
-            return result("头部向右看。", "head_right")
-        if any(k in t for k in ("回正", "看前", "向前看", "正视")):
+            return result("Looking right.", "head_right")
+        if matches("center head", "centre head", "look forward", "look ahead", "face forward"):
             self.set_head(yaw=0.0, pitch=0.0)
-            return result("头部回正。", "head_center")
-
+            return result("Head centered.", "head_center")
         return result(
-            "我还听不懂这句。可以试：“站起来”“向前走”“停下”“坐下”“捡东西”“右踢”“前滚翻”“重置”。",
-            None,
+            "Command not recognized. Try stand up, walk forward, stop, sit down, pick up, "
+            "right kick, forward roll, look left, look right, center head, or reset."
         )
 
     # ------------------------------------------------------------------
@@ -1269,7 +1273,7 @@ class Handler(BaseHTTPRequestHandler):
                 if "paused" in payload:
                     with lab.lock:
                         lab.paused = bool(payload["paused"])
-                        lab.event = "已暂停" if lab.paused else "继续播放"
+                        lab.event = "Paused" if lab.paused else "Resume"
                 else:
                     lab.toggle_pause()
                 self._json({"ok": True, "state": lab.state()})
@@ -1294,7 +1298,7 @@ class Handler(BaseHTTPRequestHandler):
                     lab.set_twist(vx=0.0, vy=0.0, wz=0.0)
                 # reset() clears the running policy to stand, but the UI
                 # selection should survive a keep reset (e.g. reset while
-                # "前滚翻" is selected stays on 前滚翻).  A forced stand clears it.
+                # "Forward roll" is selected stays on Forward roll).  A forced stand clears it.
                 lab.selected = prev_selected if keep else "stand"
                 self._json({"ok": True, "state": lab.state()})
             elif path == "/api/camera":

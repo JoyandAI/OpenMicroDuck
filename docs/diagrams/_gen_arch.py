@@ -4,7 +4,7 @@ from pathlib import Path
 
 OUT = Path(__file__).resolve().parent
 
-FONT = "'Microsoft YaHei', '微软雅黑', 'PingFang SC', 'Noto Sans SC', sans-serif"
+FONT = "'Arial', 'Helvetica', sans-serif"
 TEXT = "#1B3A6B"
 LINE = "#4A6A88"
 
@@ -140,7 +140,7 @@ def legend(items, x, y):
             f'    <rect x="{cx}" y="{y}" width="14" height="14" rx="4" fill="{fill}" stroke="{stroke}" stroke-width="1.4"/>'
         )
         parts.append(f'    <text x="{cx + 20}" y="{y + 12}">{esc(name)}</text>')
-        cx += 42 + max(12 * len(name), 36)
+        cx += 42 + max(6.5 * len(name), 36)
     parts.append("  </g>")
     return "\n".join(parts)
 
@@ -155,35 +155,35 @@ def write(name, body):
 # 1. software overview
 # ---------------------------------------------------------------------------
 w, h = 980, 430
-parts = [svg_open(w, h, "软件总览：离线训练与板载执行")]
-parts.append(group(24, 52, 450, 318, "开发机 / Hugging Face Jobs"))
-parts.append(group(506, 52, 450, 318, "板上 Linux（RK3566 同级）"))
+parts = [svg_open(w, h, "Software: offline training and onboard execution")]
+parts.append(group(24, 52, 450, 318, "Workstation / Hugging Face Jobs"))
+parts.append(group(506, 52, 450, 318, "Onboard Linux (RK3566 class)"))
 parts.append(box(52, 92, 394, 118, "train", [
     "mjlab + MuJoCo Warp",
-    "PPO · BAM 执行器模型",
-    "域随机化 · 回差仿真",
+    "PPO · BAM actuator model",
+    "Domain randomization · backlash",
 ], 14))
 parts.append(box(52, 248, 394, 96, "model", [
     ".onnx + manifest.json",
     "obs 61  →  act 14  ·  50 Hz",
 ], 14))
-parts.append(arrow(249, 210, 249, 248, label="导出", lx=278, ly=232))
+parts.append(arrow(249, 210, 249, 248, label="Export", lx=278, ly=232))
 parts.append(box(534, 92, 394, 118, "transport", [
-    "systemd 守护进程簇",
+    "systemd services",
     "JSON-RPC / Unix socket",
     "mediad · tofd · padd · btd …",
 ], 14))
 parts.append(box(534, 248, 394, 96, "core", [
     "robotd  @  50 Hz",
-    "观测 → 策略 → 安全钳位 → 舵机",
+    "Observe → infer → clamp → actuate",
 ], 14))
-parts.append(arrow(731, 210, 731, 248, label="拉起", lx=760, ly=232))
-parts.append(path_arrow("M 446 296 L 534 296", label="部署 / Hub 拉取", lx=490, ly=282))
+parts.append(arrow(731, 210, 731, 248, label="Start", lx=760, ly=232))
+parts.append(path_arrow("M 446 296 L 534 296", label="Deploy / Hub", lx=490, ly=282))
 parts.append(legend([
-    ("train", "训练"),
-    ("model", "策略模型"),
-    ("transport", "系统服务"),
-    ("core", "控制环"),
+    ("train", "Training"),
+    ("model", "Policy"),
+    ("transport", "Services"),
+    ("core", "Control loop"),
 ], 24, 392))
 parts.append(svg_close())
 write("software-overview.svg", "\n".join(parts))
@@ -192,26 +192,26 @@ write("software-overview.svg", "\n".join(parts))
 # 2. daemons
 # ---------------------------------------------------------------------------
 w, h = 1080, 720
-parts = [svg_open(w, h, "板载进程：同一套 API，多种传输")]
+parts = [svg_open(w, h, "Onboard processes: shared API, multiple transports")]
 # 5 equally spaced client boxes (narrower so they do not overlap)
 cw, gap0 = 168, 48
 xs = [24 + i * (cw + gap0) for i in range(5)]
 clients = [
-    ("手柄 BLE/USB", "padd 入口"),
-    ("手机 BLE", "配网 / 状态"),
-    ("笔记本 SSH", "robotctl"),
-    ("远端 WebRTC", "遥操 / 推流"),
-    ("GitHub Release", "发布包"),
+    ("BLE/USB gamepad", "padd input"),
+    ("Phone BLE", "Network / status"),
+    ("Laptop SSH", "robotctl"),
+    ("Remote WebRTC", "Teleop / streaming"),
+    ("GitHub Release", "Release"),
 ]
 for x, (t, s) in zip(xs, clients):
     parts.append(box(x, 56, cw, 62, "client", [t, s], 13))
 
 # transports aligned under the first four clients
 transports = [
-    ["padd", "手柄 → 意图"],
-    ["btd", "BLE GATT 门面"],
-    ["robotctl", "CLI · 全部 socket"],
-    ["mediad", "相机 / 音频 / WebRTC"],
+    ["padd", "Gamepad → intent"],
+    ["btd", "BLE GATT gateway"],
+    ["robotctl", "CLI · all sockets"],
+    ["mediad", "Camera / audio / WebRTC"],
 ]
 for x, lines in zip(xs[:4], transports):
     cx = x + cw / 2
@@ -220,7 +220,7 @@ for x, lines in zip(xs[:4], transports):
 
 # IPC bar spanning the four transports
 ipc_x, ipc_w = xs[0], xs[3] + cw - xs[0]
-parts.append(box(ipc_x, 278, ipc_w, 56, "ipc", ["Unix socket  ·  JSON-RPC 2.0（NDJSON）  ·  同一套 robot.* / net.* / update.*"], 13, 600))
+parts.append(box(ipc_x, 278, ipc_w, 56, "ipc", ["Unix socket · JSON-RPC 2.0 (NDJSON) · shared robot.* / net.* / update.*"], 13, 600))
 for x in xs[:4]:
     cx = x + cw / 2
     parts.append(arrow(cx, 232, cx, 278))
@@ -228,9 +228,9 @@ for x in xs[:4]:
 # cores under the IPC bar
 core_w, core_gap = 256, 24
 core_xs = [ipc_x + i * (core_w + core_gap) for i in range(3)]
-parts.append(box(core_xs[0], 378, core_w, 96, "core", ["robotd", "50 Hz 环 · 电机 / IMU / 策略 / 安全"], 14))
-parts.append(box(core_xs[1], 378, core_w, 96, "recover", ["configd", "Wi-Fi · 名字 · 配对 PIN"], 14))
-parts.append(box(core_xs[2], 378, core_w, 96, "recover", ["updaterd", "验签 · 切换 · 健康门 · 回滚"], 14))
+parts.append(box(core_xs[0], 378, core_w, 96, "core", ["robotd", "50 Hz · motors / IMU / safety"], 14))
+parts.append(box(core_xs[1], 378, core_w, 96, "recover", ["configd", "Wi-Fi · name · pairing PIN"], 14))
+parts.append(box(core_xs[2], 378, core_w, 96, "recover", ["updaterd", "Verify · switch · check · roll back"], 14))
 for x in core_xs:
     cx = x + core_w / 2
     parts.append(arrow(cx, 334, cx, 378, both=True))
@@ -240,26 +240,26 @@ gh_cx = xs[4] + cw / 2
 upd_right = core_xs[2] + core_w
 parts.append(path_arrow(
     f"M {gh_cx:.0f} 118 L {gh_cx:.0f} 426 L {upd_right} 426",
-    label="https 发布包", lx=gh_cx + 52, ly=270,
+    label="HTTPS release", lx=gh_cx + 52, ly=270,
 ))
 
 # hardware + tofd
-parts.append(box(core_xs[0], 518, core_w, 80, "bus", ["舵机总线 + 机身 IMU", "仅 robotd 可写电机"], 13))
+parts.append(box(core_xs[0], 518, core_w, 80, "bus", ["Servo bus + body IMU", "Only robotd writes motors"], 13))
 parts.append(arrow(core_xs[0] + core_w / 2, 474, core_xs[0] + core_w / 2, 518, both=True))
-parts.append(box(core_xs[1], 518, core_xs[2] + core_w - core_xs[1], 80, "sensor", ["tofd  ·  只发布、不订阅", "8×8 深度 → /run/tofd/tof.sock    mediad / robotd 只读"], 13))
+parts.append(box(core_xs[1], 518, core_xs[2] + core_w - core_xs[1], 80, "sensor", ["tofd · publish only", "8×8 depth → /run/tofd/tof.sock · read-only consumers"], 13))
 
 parts.append(legend([
-    ("client", "外部入口"),
-    ("transport", "传输 / 媒体"),
-    ("ipc", "控制面 IPC"),
-    ("core", "运动控制"),
-    ("recover", "配置 / 更新"),
-    ("bus", "执行器总线"),
-    ("sensor", "感知发布"),
+    ("client", "Clients"),
+    ("transport", "Transport / media"),
+    ("ipc", "Control IPC"),
+    ("core", "Motion control"),
+    ("recover", "Config / updates"),
+    ("bus", "Actuator bus"),
+    ("sensor", "Perception"),
 ], 28, 632))
 parts.append(
     f'  <text x="28" y="678" font-family="{FONT}" font-size="12" fill="{TEXT}">'
-    f'configd / updaterd / btd 在 robotd 死掉时仍可用；控制环不对其他服务做同步 RPC。</text>'
+    f'configd / updaterd / btd survive robotd failure; the control loop never blocks on service RPC.</text>'
 )
 parts.append(svg_close())
 write("daemons.svg", "\n".join(parts))
@@ -268,19 +268,19 @@ write("daemons.svg", "\n".join(parts))
 # 3. control tick
 # ---------------------------------------------------------------------------
 w, h = 760, 900
-parts = [svg_open(w, h, "50 Hz 控制环：一拍里的数据流")]
+parts = [svg_open(w, h, "50 Hz control loop: data flow within one tick")]
 cx, bw = 170, 420
 ys = [56, 156, 268, 378, 488, 598, 720]
 hs = [72, 84, 82, 82, 82, 94, 82]
 roles = ["sensor", "step", "step", "model", "step", "safety", "actuator"]
 labels = [
-    ["sync_read", "IMU + 15 舵机 · 寄存器 124–136"],
-    ["建观测  [f32; 61]", "gyro · 投影重力 · 关节 · 上拍动作 · 指令"],
-    ["技能仲裁", "翻滚 > 踢 > 拾取 > 起坐 > 站 > 走"],
-    ["ONNX 推理", "obs 61  →  act 14"],
-    ["家位 + scale × action", "头 / 腿一阶低通"],
-    ["safety.apply", "拒绝 NaN · 钳行程 · 死区（断指令则站住）"],
-    ["sync_write", "写入 15 个目标位置"],
+    ["sync_read", "IMU + 15 servos · registers 124–136"],
+    ["Build observation [f32; 61]", "Gyro · gravity · joints · previous action · command"],
+    ["Skill arbitration", "Roll > kick > pick > sit/stand > stand > walk"],
+    ["ONNX inference", "obs 61  →  act 14"],
+    ["Home + scale × action", "Head / leg low-pass filters"],
+    ["safety.apply", "Reject NaN · clamp range · stale command → stand"],
+    ["sync_write", "Write 15 target positions"],
 ]
 for y, hh, role, lines in zip(ys, hs, roles, labels):
     parts.append(box(cx, y, bw, hh, role, lines, 14))
@@ -289,21 +289,21 @@ for i in range(len(ys) - 1):
     y2 = ys[i + 1]
     parts.append(arrow(cx + bw / 2, y1, cx + bw / 2, y2))
 
-# intent side → 建观测
-parts.append(box(24, 156, 128, 84, "client", ["意图快照", "速度 / 头 / 身体"], 12))
+# intent side → observation
+parts.append(box(24, 156, 128, 84, "client", ["Intent snapshot", "Speed / head / body"], 12))
 parts.append(arrow(152, 198, 170, 198))
 
 parts.append(
     f'  <text x="24" y="846" font-family="{FONT}" font-size="12" fill="{TEXT}">'
-    f'每秒另读电压 / 温度（寄存器 144–146）。摔倒检测只报告；limp_fall 可短暂接管关节。</text>'
+    f'Voltage / temperature: 1 Hz (144–146). Fall reports and limp_fall override are separate.</text>'
 )
 parts.append(legend([
-    ("sensor", "采样"),
-    ("client", "意图"),
-    ("step", "控制步骤"),
-    ("model", "策略"),
-    ("safety", "安全层"),
-    ("actuator", "下发"),
+    ("sensor", "Sample"),
+    ("client", "Intent"),
+    ("step", "Control step"),
+    ("model", "Policy"),
+    ("safety", "Safety"),
+    ("actuator", "Write"),
 ], 24, 868))
 parts.append(svg_close())
 write("control-tick.svg", "\n".join(parts))
@@ -317,7 +317,7 @@ def hw_diagram(filename, title, compute_lines, hat_lines, bus_label, devices, ex
     p.append(box(190, 52, 580, 80, "core", compute_lines, 15))
 
     # CSI: leave the SoC from its right side, not along a border
-    p.append(box(790, 148, 164, 80, "sensor", ["图像传感器", extras_note["cam"]], 12))
+    p.append(box(790, 148, 164, 80, "sensor", ["Camera sensor", extras_note["cam"]], 12))
     p.append(path_arrow("M 776 92 L 872 92 L 872 142", label="MIPI CSI", lx=824, ly=80))
 
     # HAT: vertical stub from SoC bottom, with a gap so it does not sit on the stroke
@@ -326,14 +326,14 @@ def hw_diagram(filename, title, compute_lines, hat_lines, bus_label, devices, ex
 
     # I2C devices under HAT
     p.append(box(200, 330, 168, 70, "sensor", ["DToF 8×8", extras_note["tof"]], 12))
-    p.append(box(392, 330, 168, 70, "sensor", ["头部 IMU", extras_note["himu"]], 12))
-    p.append(box(584, 330, 196, 70, "audio", ["麦克风 / 扬声器", extras_note["audio"]], 12))
+    p.append(box(392, 330, 168, 70, "sensor", ["Head IMU", extras_note["himu"]], 12))
+    p.append(box(584, 330, 196, 70, "audio", ["Mic / speaker", extras_note["audio"]], 12))
     p.append(path_arrow("M 430 288 L 284 324", both=True, label="I²C ≤400 kHz", lx=300, ly=300))
     p.append(path_arrow("M 540 288 L 476 324", both=True))
     p.append(path_arrow("M 640 288 L 682 324", both=True))
 
     # UART: exit SoC left-center, drop in the left gutter, land on the bus top with a gap
-    p.append(path_arrow("M 184 92 L 80 92 L 80 446", both=True, label="UART TTL 半双工", lx=132, ly=270))
+    p.append(path_arrow("M 184 92 L 80 92 L 80 446", both=True, label="UART TTL half-duplex", lx=132, ly=270))
 
     # bus bar
     p.append(box(40, 452, 900, 50, "bus", [bus_label], 14))
@@ -346,12 +346,12 @@ def hw_diagram(filename, title, compute_lines, hat_lines, bus_label, devices, ex
 
     p.append(legend([
         ("core", "SoC"),
-        ("hat", "扩展板 / 电源"),
-        ("sensor", "传感器"),
-        ("audio", "音频"),
-        ("bus", "舵机总线"),
-        ("actuator", "执行器"),
-        ("model", "IMU 从机"),
+        ("hat", "HAT / power"),
+        ("sensor", "Sensors"),
+        ("audio", "Audio"),
+        ("bus", "Servo bus"),
+        ("actuator", "Actuators"),
+        ("model", "IMU slave"),
     ], 40, 640))
     p.append(
         f'  <text x="40" y="688" font-family="{FONT}" font-size="12" fill="{TEXT}">{esc(extras_note["foot"])}</text>'
@@ -362,51 +362,51 @@ def hw_diagram(filename, title, compute_lines, hat_lines, bus_label, devices, ex
 
 hw_diagram(
     "hw-openmicroduck.svg",
-    "OpenMicroDuck 硬件模块（规划）",
+    "OpenMicroDuck hardware (planned)",
     ["SoC", "NPU · ISP · Wi-Fi / BT"],
     [
-        "开源 HAT / 电源扩展板",
-        "半双工方向电路  ·  18650 配电",
-        "音频 codec  ·  I²C 扩展",
+        "HAT / power board",
+        "Half-duplex PHY · 18650 power",
+        "Audio codec · I²C expansion",
     ],
-    "舵机总线  ·  Feetech 兼容协议  ·  TTL 半双工",
+    "Servo bus · Feetech-compatible protocol · half-duplex TTL",
     [
-        ("actuator", ["左腿 ×5", "ID 20–24"]),
-        ("actuator", ["右腿 ×5", "ID 10–14"]),
-        ("actuator", ["头颈 + 嘴 ×5", "ID 30–34"]),
-        ("model", ["机身 imu_to_servo", "总线从机  ID 200"]),
+        ("actuator", ["Left leg ×5", "ID 20–24"]),
+        ("actuator", ["Right leg ×5", "ID 10–14"]),
+        ("actuator", ["Head, neck, mouth ×5", "ID 30–34"]),
+        ("model", ["Body imu_to_servo", "Bus slave ID 200"]),
     ],
     {
-        "cam": "CSI 模组（未钉死）",
-        "tof": "Qwiic / 0x29 一类",
-        "himu": "I²C · 不进控制环",
-        "audio": "经 codec · ALSA",
-        "foot": "NPU 与 ISP 必备（入门算力即可，为控功耗）；换 Feetech 后须重训，契约仍为 obs 61 → act 14。",
+        "cam": "CSI module (TBD)",
+        "tof": "Qwiic / e.g. 0x29",
+        "himu": "I²C · outside control loop",
+        "audio": "Codec · ALSA",
+        "foot": "Perception uses NPU / ISP. Feetech actuators need adapted policies; retain obs 61 → act 14.",
     },
 )
 
 hw_diagram(
     "hw-microduck.svg",
-    "Microduck 硬件模块（源码还原，非官方 BOM）",
+    "Microduck hardware (inferred from source, not a production BOM)",
     ["SoC", "Radxa Zero 3W · RK3566 · NPU · ISP"],
     [
-        "Pollen RPI Robot HAT（已开源）",
+        "Pollen RPI Robot HAT (open source)",
         "TLV320AIC3104 @ 0x18  ·  BMI088 dormant",
-        "Stemma J5 → ToF  ·  半双工 DXL PHY  ·  NP-F550",
+        "Stemma J5 → ToF · DXL PHY · NP-F550",
     ],
-    "Dynamixel Protocol 2.0  ·  1 Mbps  ·  单线半双工 TTL",
+    "Dynamixel Protocol 2.0 · 1 Mbps · single-wire half-duplex TTL",
     [
-        ("actuator", ["XL330 ×5  右腿", "ID 10–14"]),
-        ("actuator", ["XL330 ×5  左腿", "ID 20–24"]),
-        ("actuator", ["XL330 ×5  头 / 嘴", "ID 30–34"]),
+        ("actuator", ["XL330 ×5 right leg", "ID 10–14"]),
+        ("actuator", ["XL330 ×5 left leg", "ID 20–24"]),
+        ("actuator", ["XL330 ×5 head / mouth", "ID 30–34"]),
         ("model", ["imu_to_dxl v2", "LSM6DSV16X  ID 200"]),
     ],
     {
         "cam": "IMX219 / I²C 0x10",
         "tof": "VL53L5/8CX @ 0x29",
-        "himu": "规格有 · 运行时未用",
-        "audio": "Mic3R + LOP 喇叭",
-        "foot": "NPU / ISP 随相机与语音路径必备。imu_to_dxl 原理图未开源；头部 IMU 与控制环「只用一颗」尚未对齐。",
+        "himu": "Specified; runtime unused",
+        "audio": "Mic3R + LOP speaker",
+        "foot": "imu_to_dxl schematic is unavailable. The head IMU is not part of the current balance loop.",
     },
 )
 

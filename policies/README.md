@@ -1,15 +1,16 @@
-# OpenMD policies（HD-1910 / robotd 部署用）
+# OpenMD policies for HD-1910 / robotd
 
-这个目录是 OpenMD ：6 个可部署的 ONNX + 一份把索引路径改到本目录的部署参数 JSON。
+This directory contains **six deployable ONNX models** and a deployment-settings
+JSON whose relative model paths refer to this directory.
 
-- 策略索引与部署参数：`OpenMD_policy_settings_20261028.json`
-- 命名规则：`OpenMD_<角色>.onnx`，角色沿用原 JSON 的键。
-- 槽位分工（walk 槽 = walk、stand 槽 = velstand）与 sitstand 的来源见下文两节。
+- Index and parameters: `OpenMD_policy_settings_20261028.json`.
+- Naming: `OpenMD_<role>.onnx`, retaining the role keys in the original JSON.
+- Policy normalization is embedded in each ONNX graph.
 
-## 文件清单
+## Files
 
-| 角色 | ONNX | 字节 | sha256（前 12 位） |
-|---|---|---|---|
+| Role | ONNX | Bytes | SHA-256 prefix |
+|---|---|---:|---|
 | walk | `OpenMD_walk.onnx` | 793890 | `24267be20b81` |
 | stand | `OpenMD_stand.onnx` | 793842 | `783951c98a74` |
 | ground_pick | `OpenMD_ground_pick.onnx` | 804473 | `c3eff49abe24` |
@@ -17,69 +18,91 @@
 | roulade | `OpenMD_roulade.onnx` | 793717 | `3c54f3b3111c` |
 | sitstand | `OpenMD_sitstand.onnx` | 793794 | `7356e318a7ee` |
 
-六个 ONNX 的 sha256 与原始 `OpenMD_policy_settings_20261028.json` 里 `models.*.onnx_sha256` **逐字节一致**。
+The upstream release records matching full hashes in `models.*.onnx_sha256`.
+The English cleanup leaves the ONNX files and deployment JSON unchanged.
 
+## Walk and stand slots
 
+The **walk** slot uses `OpenMD_walk.onnx` (`openmd_velocity`, model_9999).
+The **stand** slot uses `OpenMD_stand.onnx` (`openmd_velstand` r3 walkpt orig,
+model_17500). With `stand_on_zero_command=true`, zero twist selects standing
+and nonzero twist selects walking.
 
-## 槽位分配：walk 槽放 walk 模型，stand 槽放 velstand 模型
+This differs from upstream arrangements that use a stand-up model in the stand
+slot or run velstand alone in the walk slot. The split was chosen because
+velstand's walking behavior still needed improvement. If a later velstand model
+covers walking adequately, it can occupy walk with stand set to none.
 
-这套槽位没有照抄官方的配法（官方是 walk 槽管走路、stand 槽放 standup，或者 walk 槽放 velstand、stand 槽留空）。这里的分配是：walk 槽给 `OpenMD_walk.onnx`（`openmd_velocity`，model_9999），stand 槽给 `OpenMD_stand.onnx`（`openmd_velstand` r3 walkpt orig，model_17500），再配 `stand_on_zero_command=true` —— 零 twist 交给 velstand 站立，非零 twist 交给 walk 行走。
+## Sit / stand
 
-这样配的原因是现阶段 velstand 单独承担走路还不够好，这一路仍在优化中；用 walk 管行走、velstand 管站立的分工，实际效果更好。等后续 velstand 训练到能独立覆盖行走，直接把 velstand 放到 walk 槽、stand 槽置为 none 即可，其余参数不用动。
+Added November 3, 2026. Both `policy.sitstand` and `models.sitstand` point to
+`OpenMD_sitstand.onnx`.
 
-## sitstand
+In **robotd 0.13.3**, sitstand action scale is hard-coded to **1.0**;
+`standing_action_scale` does not affect it. Button mapping lives in the `padd`
+binary rather than an editable configuration in this directory.
 
-这次增加了 sitstand （2026/11/3）：`OpenMD_sitstand.onnx`（793794 字节，sha256 `7356e318a7ee…`）。JSON 里 `policy.sitstand` 与 `models.sitstand` 都已指向它，不再是 `"none"` / `null`。
+The upstream hardware notes report that a forward center of mass can leave the
+robot at the initial tilted-head pose without sitting; slight backward motion
+helped in that experiment. This is an observation, not a calibrated setup procedure.
 
-动作缩放固定 1.0：robotd 0.13.3 的控制代码把 sitstand 的缩放写死成 1.0，`standing_action_scale` 对它不起作用。触发 sitstand 的按键不在本目录 —— 按键映射在 `padd` 二进制里，没有可编辑的映射配置。tips：上机测试时出现过歪头（sitstand的一个启动姿势）但没坐下的情况，一般是因为重心靠前问题；稍微给一点向后行走的惯性就能坐下。
+## Resolved deployment values, robotd 0.13.3
 
-## 部署参数（`policy.resolved`，robotd 0.13.3）
-
-| 参数 | 生效值 | 说明 |
+| Parameter | Value | Meaning |
 |---|---|---|
-| `action_scale` | 0.7 | 行走 / 默认网路缩放 |
-| `standing_action_scale` | 1.0 | stand 网路缩放（walk 不走这个 key） |
-| `stand_on_zero_command` | true | 零 twist → stand；非零 twist → walk m9999 |
-| `head_lowpass` / `legs_lowpass` | 0.5 / 0.7 | 原 JSON 为 null，取 robotd 默认 |
-| `gain` | 6 | 同上，null → 6 |
-| `voltage_adapt` | false | null → false |
-| `ground_pick_action_scale` | 1.0 | 未设 → 1.0 |
-| `roulade_action_scale` | 1.0 | |
-| `roulade_duration` | 1.0 s | |
-| `kick_duration` | 0.5 s | 未设 → 0.5 |
-| `limp_fall` | false | 不做自动跌倒恢复 |
-| `sitstand` | `OpenMD_sitstand.onnx` | 动作缩放固定 1.0 |
-| `kick_left` | none | 只有右踢 |
+| `action_scale` | 0.7 | Walking / default network scale |
+| `standing_action_scale` | 1.0 | Stand network, not the walk slot |
+| `stand_on_zero_command` | true | Zero twist → stand; nonzero → walk |
+| `head_lowpass` / `legs_lowpass` | 0.5 / 0.7 | Original null values resolve to runtime defaults |
+| `gain` | 6 | Runtime default for null |
+| `voltage_adapt` | false | Runtime default for null |
+| `ground_pick_action_scale` | 1.0 | Default when absent |
+| `roulade_action_scale` | 1.0 | Roll scaling |
+| `roulade_duration` | 1.0 s | Board deployment value |
+| `kick_duration` | 0.5 s | Default when absent |
+| `limp_fall` | false | Automatic fall response disabled |
+| `sitstand` | `OpenMD_sitstand.onnx` | Fixed scale 1.0 |
+| `kick_left` | none | Only right kick is supplied |
 
-HOME 帧（`policy.home_deg`）：neck_pitch/head_pitch 20°，hip_roll −5/+5°，hip_pitch −26.2/+26.2°，ankle +26/−26°，knee 0°。列表有 15 项，因为板端配置还包含 `mouth` 关节；按原样保留，未做删改。
+`policy.home_deg` contains 15 values including mouth:
+neck_pitch/head_pitch 20°; hip_roll −5/+5°; hip_pitch −26.2/+26.2°;
+ankle +26/−26°; knee 0°. Preserve the supplied list rather than truncating it to
+the 14-dimensional policy action.
 
-## 用法
+## Usage
 
-JSON 里所有路径都相对于本目录（`base_dir: "policies"`），把整个 `policies/` 拷到别处即可直接用；原始板端绝对路径保留在每个模型的 `board_path` 字段里备查。
+Paths use `base_dir: "policies"`. Copy the entire directory together.
+Original absolute board paths remain in each model's `board_path` for provenance.
+
+Run on a configured robot:
 
 ```bash
-# 部署到机器人
-sudo robotctl policy add walk <owner>/<repo>@policies/OpenMD_walk.onnx
-sudo robotctl policy add sitstand <owner>/<repo>@policies/OpenMD_sitstand.onnx
-# 或直接把文件拷到板端 /opt/robot/policies/trials/<name>/ 再改 robotd.toml
-
-# 本地 CPU 复演（不碰真机）
-uv run scripts/infer_policy.py --walking policies/OpenMD_walk.onnx --standing policies/OpenMD_stand.onnx
+sudo robotctl policy add walk tnmygrwl/buduck@policies/OpenMD_walk.onnx
+sudo robotctl policy add sitstand tnmygrwl/buduck@policies/OpenMD_sitstand.onnx
+# Alternatively, copy models to /opt/robot/policies/trials/<name>/ and edit robotd.toml.
 ```
 
-ONNX 形状固定 `[1,61] -> [1,14]`，观测归一化已烘进图里；**不要**手写脚本从训练 checkpoint 直接转 ONNX 覆盖这些文件。
+For local playback, use [Motion Lab](../motion-lab/README.md).
+The upstream `uv run scripts/infer_policy.py --walking ... --standing ...`
+command belongs to the training checkout; that script is not part of Buduck.
 
+All models have shape **[1,61] → [1,14]**. Do not overwrite them with a direct
+checkpoint-to-ONNX conversion that omits normalization.
 
+## Verify model loading
 
-## 复核命令
+Run from the repository root with ONNX Runtime and NumPy installed:
 
-```powershell
-# 每个 ONNX 能加载、形状正确、输出有限
+```bash
 python - <<'PY'
-import onnxruntime as ort, numpy as np, glob
-for p in sorted(glob.glob("policies/*.onnx")):
-    s = ort.InferenceSession(p, providers=["CPUExecutionProvider"])
-    o = s.run(None, {"obs": np.zeros((1, 61), np.float32)})[0]
-    print(p, s.get_inputs()[0].shape, "->", o.shape, "finite:", np.isfinite(o).all())
+import glob
+import numpy as np
+import onnxruntime as ort
+
+for path in sorted(glob.glob("policies/*.onnx")):
+    session = ort.InferenceSession(path, providers=["CPUExecutionProvider"])
+    output = session.run(None, {"obs": np.zeros((1, 61), np.float32)})[0]
+    print(path, session.get_inputs()[0].shape, "->", output.shape,
+          "finite:", np.isfinite(output).all())
 PY
 ```

@@ -1,236 +1,205 @@
-# 舵机选型
-
-本文说明 OpenMicroDuck 的舵机选型逻辑：Microduck 实际用的是哪颗、它提供什么能力、按什么标准找平替。
-
-证据分级与 `[architecture.md](architecture.md)` 相同：
-
-
-| 标记       | 含义                                              |
-| -------- | ----------------------------------------------- |
-| **官方**   | 产品规格、厂商手册，或 `pollen-robotics/microduck` 源码与设计文档 |
-| **源码还原** | 运行时写死的寄存器、波特率、总线事务；社区据此还原，非官方 BOM               |
-| **规划**   | 本仓库的选型原则，尚未冻结兼容性矩阵                              |
-| **未定**   | 公开材料互相矛盾，预售件尚未给全参数，或零售价随渠道波动                    |
-
-
-舵机是整机成本与 sim-to-real 的第一瓶颈：15 颗执行器决定结构能不能原样装上、50 Hz 环能不能读全状态、以及官方 ONNX 能不能当 bit-exact 用。换型号必须 **重训** 策略，见 `[architecture.md](architecture.md)` §3。
-
----
-
-
-
-## 1. Microduck 用的是什么
-
-产品规格钉的是 **15 个电机**；运行时总线按 **ROBOTIS Dynamixel XL330** 说话（**官方**：`[robotd-design.md](https://github.com/pollen-robotics/microduck/blob/main/docs/design/robotd-design.md)`、`[rustypot](https://github.com/pollen-robotics/rustypot)` 寄存器表）。规格没有写 M288 / M077 这一档 SKU。
-
-减速比、堵转扭矩、以及训练里的 **BAM M6** 执行器模型（按 XL330 电压控制律建模）与 **XL330-M288** 对齐，而不是高速低扭的 M077（77:1，堵转约 M288 的 1/3）。本文按 **XL330-M288-T** 记录；若量产改用同壳其它减速比，几何能装、控制契约对不上。
-
-后缀 `-T` 是 TTL 半双工；没有 RS-485 的 `-W` 变体。手册：[XL330-M288](https://docs.robotis.com/docs/dxl/model_reference/x_series/xl_series/xl330-m288/)。
-
-### 1.1 规格（官方手册）
-
-
-| 项目              | XL330-M288-T                                                                    |
-| --------------- | ------------------------------------------------------------------------------- |
-| 重量              | **18 g**                                                                        |
-| 尺寸（W × H × D）   | **20.0 × 34.0 × 26.0 mm**                                                       |
-| 减速比             | **288.4 : 1**                                                                   |
-| 编码器             | 12-bit 绝对式磁编码（ams AS5601），4096 pulse/rev                                        |
-| 堵转扭矩            | 0.42 N·m @ 3.7 V（1.11 A） **0.52 N·m @ 5.0 V（1.47 A）** 0.60 N·m @ 6.0 V（1.74 A）  |
-| 额定扭矩            | 手册与商店页 **未给**（Continuous Operation 栏为 —）                                        |
-| 空载转速            | 76 rpm @ 3.7 V 103 rpm @ 5.0 V 123 rpm @ 6.0 V                                  |
-| 空载电流            | 商店页：**0.15 A @ 5.0 V**（e-Manual 规格表未单列）                                         |
-| 待机电流            | **17 mA**（商店页另写 15 mA）                                                          |
-| 供电              | **3.7 ~ 6.0 V**（推荐 **5.0 V**）                                                   |
-| 最高通讯带宽          | 硬件 **9 600 bps ~ 4 Mbps**（波特率表另有 4.5 Mbps 档）                                    |
-| Microduck 实际波特率 | **1 Mbps**（见 §4）                                                                |
-| 接口              | TTL 3P 菊花链（随包 **Robot Cable-X3P**，JST–JST）；逻辑 **3.3 V，5 V 兼容**                  |
-| 线序              | 与常见 DYNAMIXEL 3P 相同：GND / VDD / DATA                                            |
-| 通信协议            | **Dynamixel Protocol 2.0**；半双工异步，8N1                                            |
-| 恒力相关模式          | **电流控制（Operating Mode 0）**；**电流限制的位置控制（Mode 5，Current-based Position Control）** |
-| 出厂默认模式          | Mode **3**（普通位置控制）                                                              |
-| 反馈              | 位置、速度、电流、PWM、轨迹、温度、输入电压、错误状态                                                    |
-| 外壳 / 齿轮         | 工程塑料                                                                            |
-| 零售价（2026-09）    | Robotics 韩国店 **$23.90**；美国店 **$27.49**；国内授权渠道约 **¥95–¥238**（随 SKU / 含税波动）      |
-
-
-15 颗按韩国店牌价约 **$360**，是整机 BOM 里最贵的一块。这是找平替的直接原因。
-
-### 1.2 为什么是这颗，而不只是「能转的舵机」
-
-XL330-M288 在这个尺寸里同时给了三件对 RL 双足要紧的东西：
-
-1. **磁编码 + 总线状态回报。** 50 Hz 环要的不是「转到大概某个角」，而是编码器侧的位置 / 速度，外加 PWM 与电流。官方一拍 `sync_read` 读寄存器 124–136（PWM、电流、速度、位置）；电压、温度在 144–146，每秒另读一次（**官方**：`[robotd-design.md](https://github.com/pollen-robotics/microduck/blob/main/docs/design/robotd-design.md)`）。没有这些反馈，61 维观测拼不出来，BAM 也标定不了。
-2. **电流环 / 电流限制的位置环（恒力）。** Mode 0 只跟电流（力矩）；Mode 5 跟位置，同时用 `Goal Current` 把力矩顶住。摔倒卸力、落地冲击、鸭嘴夹东西、人工拖关节，都不能靠「位置 PID 死顶」。恒力把输出扭矩变成可设的上限，齿轮和结构才活得过接触。
-3. **轻、小、菊花链。** 18 g、20×34×26 mm、双 3P TTL，15 颗加 `imu_to_dxl` 挂同一根半双工线。HAT 上只要一套 UART 换向电路。
-
-电流、力矩、温度各自进不同层，不是装饰寄存器：
-
-- **电流 / PWM：** 每拍进观测；也是过载、堵转、接线故障的第一现场。BAM M6 按电压控制律与反电动势建模，没有电流就没有这条 sim-to-real 缝。
-- **力矩（由电流 × 力矩常数估计，或厂家直接给负载寄存器）：** 安全层用来限幅；策略不直接输出力矩，但真机接触力必须看得到。
-- **温度：** 1 Hz 慢采样，**按关节上报、取最热的那个名字**。下蹲时膝盖远比鸭嘴热；平均 15 颗会把快过热的那颗藏起来。`shutdown` 掩码在过热、过载、输入电压故障时锁存（运行时写成 `52`）。
-
-默认 Mode 3 也能走位置环。`robotd` 启动校正写的是 `return_delay_time`、`baud_rate`、`pwm_slope`、`shutdown`，**没有**把 Operating Mode 改成 5。所以「量产环已经跑在恒力位置模式」目前只能标 **未定**；选型仍要求平替 **具备** 编码恒力（电流环或电流限制的位置环），因为卸力、接触和 BAM 都依赖这条能力。
-
----
-
-
-
-## 2. 选型思路（规划）
-
-尚未做兼容性矩阵。平替按下面六条筛，**可以只先满足机械与电气，再补协议**；协议不兼容不是否决项。
-
-
-| #   | 原则              | 含义                                                       |
-| --- | --------------- | -------------------------------------------------------- |
-| a   | **结构能装上**       | 外形、安装孔、轴齿、出线方向与 XL330 同档，尽量不改腿 / 头壳体                     |
-| b   | **类型相同**        | 必须是 **磁编码 + 恒力（电流 / 电流限制位置）** 总线舵机，不是 PWM 航模舵机           |
-| c   | **电气、扭矩、重量相近**  | 电压、堵转 / 额定、空载转速、质量分布接近，才谈得上复现步态；差一档就要重训                  |
-| d   | **接口与出线方向一致**   | 3 线 TTL、GND / 电源 / DATA 线序、插头与出线方向少改电路和结构                |
-| e   | **协议可以改软件**     | Dynamixel / 飞特 / 宇树自定义 **大多互不兼容**；改 `RobotIo` 驱动的成本小于改模具 |
-| f   | **质量可控，价格足够便宜** | 15 颗是乘法；在可追溯批次与寿命测试的前提下压价                                |
-
-
-电压不同 **必须改供电器件**：电池组串数、HAT 上的舵机轨、MOSFET / 电流容量、连接器额定，都不能沿用 XL330 的 5 V 假设。Microduck 电池是 NP-F550（2S，标称 7.2 V），零售 XL330 上限 6.0 V，两者如何匹配 **尚未被量产机证实**（`[architecture.md](architecture.md)` §2.2）。OpenMicroDuck 规划 18650 可拆组，轨电压跟选定舵机走。
-
-换执行器之后，官方 9 个 ONNX **不能当即插即用步态**。要在 `microduck_rl` 里按新 BAM（或实测）重训，并保持 `obs[61] → act[14]`。
-
----
-
-
-
-## 3. 目前可选的平替
-
-对照基线是 XL330-M288-T。候选来自本仓库 `hardware_spec/servo/` 与厂商公开页；**不是**已冻结的采购清单。
-
-### 3.1 型号说明
-
-1. **Feetech HD-1910-C001**（外形图亦作 HD-1910M-C001）
-  飞特为开源小鸭做的串行总线舵机。电气与协议以规格书 A/0（2026-09-07）为准：`hardware_spec/servo/HD-1910-C001串型规格书-20260907.pdf`。工作电压 **4–8.4 V**，电气表给 4.8 / **6** / 7.4 V 三点；封面按 6 V / 12 kg 标定。外形图：`hardware_spec/servo/HD-1910M-C001-drawing-20260902.pdf`。
-2. **Unitree YS-342026-S288**
-  宇树无刷数字舵机塑料壳档，**12.6 V** 推荐，外形 **20 × 34 × 26 mm** 与 XL330 同尺寸、同 288.35:1 减速比。[产品页](https://www.unitree.com/cn/DigitalServo)。同系列 J288 是金属齿 / 铝壳 / 最高 25.2 V，更重更贵，不作为默认平替。
-3. **KPower RD05T**（伟创动力）
-  6 kg 双轴微型总线舵机。规格书：`hardware_spec/servo/KPower-RD05T-spec-2026-09.pdf`（原文件名 `Kpower-RD05T-6kg双轴塑胶微型舵机规格书-26-9.pdf`，封面标注 26-9）。外形 **26 × 20 × 34 mm**、**18 g**，塑胶壳，与 XL330 同档体积重量。工作电压 **3.6–8.4 V**，电气表给 **6 V / 5 V** 两点。协议勾选 TTL/RS-485（半双工 8N1），针序 **1 GND / 2 VCC / 3 TTL**。6 V 堵转 6 kg·cm、额定 **1.5 kg·cm**，不要和 HD-1910 的 12 / 3 kg·cm 当成同一颗。恒力 / 电流环规格书未单列；有电流反馈与过载 / 过流 / 过压 / 过热保护。
-4. **Feetech HL-2909-C001 / HL-2915-C002**
-  用户侧说明 **HL-2915-C002 为曾用名**。仓库规格书封面型号是 **HL-2915-C002**（A/0，2026-02-27），正文未出现 2909 的独立参数表，下表按这份 12 V 规格书写。文件：`hardware_spec/servo/HL-2915-C002_HL-2909-C001串型规格书-20260227.pdf`。
-
-
-
-### 3.2 参数对照
-
-扭矩、空载转速、电流以 **6 V** 为对照点（1 kg·cm ≈ 0.098 N·m）。XL330 上限即 6.0 V；HD-1910 规格书给了 4.8 / 6 / 7.4 V 三点，表内取 **6 V**。RD05T 给了 6 V / 5 V 两点，表内取 **6 V**。S288 最低 6.4 V、HL-2915 额定 12 V，规格书没有 6 V 工况，这两列保留其额定电压并写明，避免和 6 V 混读。空格表示该来源没写。
-
-
-| 舵机型号                | XL330-M288-T                            | HD-1910-C001                               | YS-342026-S288                | KPower RD05T             | HL-2915-C002                       |
-| ------------------- | --------------------------------------- | ------------------------------------------ | ----------------------------- | ------------------------ | ---------------------------------- |
-| 证据                  | **官方** 手册                               | 飞特规格书 A/0，2026-09-07                       | **官方** 产品页                    | 伟创规格书 26-9               | 飞特规格书 A/0                          |
-| 重量                  | 18 g                                    | 21 ± 2 g                                   | 19.5 g                        | **18 g**                 | 22.5 ± 2 g                         |
-| 尺寸 mm               | 20 × 34 × 23含舵盘（20 × 34 × 29）          | 20 × 34 × 23含舵盘（20 × 34 × 29）             | **20 × 34 × 26**              | **26 × 20 × 34**         | 34 × 20 × 23                       |
-| 减速比                 | 288.4 : 1                               | 320 : 1                                    | 288.35 : 1                    | 未给                       | 320 : 1                            |
-| 对照电压                | **6.0 V**（上限）                           | **6 V**（另有 4.8 / 7.4 V）                    | 12 V（最低 6.4 V，**无 6 V 点**）    | **6 V**（另有 5 V）          | 12 V（范围 9–14 V，**无 6 V 点**）        |
-| 堵转扭矩                | ≈ 6.1 kg·cm（0.60 N·m）@ 6 V              | **12 kg·cm**（1.18 N·m）@ 6 V                | 0.6 N·m @ 12 V                | **6 kg·cm**（0.59 N·m）@ 6 V | 8.9 kg·cm（0.87 N·m）@ 12 V          |
-| 额定扭矩                | 未给                                      | **3 kg·cm**（0.29 N·m）@ 6 V                 | 未给                            | **1.5 kg·cm**（0.15 N·m）@ 6 V | 2.9 kg·cm（0.28 N·m，约 1/3 堵转）@ 12 V |
-| 空载转速                | **123 rpm** @ 6 V                       | **92 rpm** @ 6 V                           | 157 rpm @ 12 V                | **125 rpm**（0.08 s/60°）@ 6 V | 77 rpm @ 12 V                      |
-| 供电                  | 3.7–6.0 V（推荐 5 V）                       | **4–8.4 V**                                | 6.4–12.6 V（推荐 **12.6 V**）     | **3.6–8.4 V**            | **9–14 V**（额定 12 V）                |
-| 待机 / 空载 / 额定 / 堵转电流 | 17 mA / 未给 @ 6 V / — / **1.74 A** @ 6 V | **20 mA / ≤180 mA / 690 mA / 1.6 A** @ 6 V | 50 mA / 0.27 A / — / — @ 12 V | **10 / 280 / — / 1740 mA** @ 6 V | 42 / 140 / 200 / 600 mA @ 12 V     |
-| **最高**波特率           | 4 Mbps                                  | **1 Mbps**                                 | **6 Mbps**                    | **4 Mbps**               | **1 Mbps**                         |
-| 接口                  | JST 3P TTL，双口菊花链；1 GND / 2 VDD / 3 DATA | AMP2.0-3P：**1 Signal / 2 Vcc / 3 GND**     | TTL 多点总线                      | EH2.54-3P：**1 GND / 2 VCC / 3 TTL** | AMP-3：**1 GND / 2 Vcc / 3 Signal** |
-| 协议                  | Dynamixel 2.0                           | 半双工 8N1，飞特数字包                              | **宇树自定义**                     | TTL 半双工 8N1（帧格式未给）       | 半双工 8N1，飞特包                        |
-| 恒力                  | Mode 0 / Mode 5                         | 模式 2 恒流；默认模式 4 为 PD 位置（规格书写 Sim2Real）      | 混合模式：力矩 + 刚度 / 阻尼             | 规格书未单列                   | 模式 2 恒流；地址 44 恒力输出                 |
-| 反馈                  | 位置 / 速度 / 电流 / 电压 / 温度 / PWM            | 位置 / 速度 / 电流 / 电压 / 温度 / 负载                | 转子力矩与角度、输出端角度、角速度、温度、电压       | 位置 / 电流 / 速度 / 电压 / 温度   | 负载 / 位置 / 速度 / 电压 / 电流 / 温度        |
-| 编码器                 | 12-bit 绝对，输出端                           | 12-bit 磁编码                                 | **双绝对值**（转子 15-bit + 输出端）     | 磁编码 360°，0.088°/pulse（约 12-bit） | 12-bit 磁编码                         |
-| 电机 / 齿轮             | 有芯 / 工程塑料                               | 空心杯 / 金属齿                                  | 无刷 / 工程塑料                     | 有刷 / POM                 | 有芯 / 金属齿                           |
-| ID 范围               | 0–252                                   | 0–253（出厂 ID 1）                             | **0–14**                      | **0–253**                | 0–253（出厂 ID 1）                     |
-| 零售价                 | $23.90–$27.49 / ¥95–¥238                | 预售，**¥123**                                | 官方店 **$29**（另有学生价档）           | 公开价 **未定**               | 公开价 **未定**                         |
-
-
-HD-1910 在 4.8 / 6 / 7.4 V 的完整电气点（规格书 §5）：空载 73 / **92** / 113 rpm；堵转 9 / **12** / 15 kg·cm；额定 2.2 / **3** / 3.7 kg·cm；堵转电流 1.2 / **1.6** / 2 A。Kt = 7.5 kg·cm/A。
-
-RD05T 在 6 / 5 V：空载 0.08 / 0.1 s/60°（**125** / 100 rpm）；堵转 6 / 5.2 kg·cm；额定 1.5 / 1.2 kg·cm；堵转电流 1740 / 1470 mA。
-
-读这张表时先看三列，而不是只看堵转：
-
-- **结构：** S288 与 XL330 同外形、同减速比，机械上最省事；RD05T 标 26×20×34、18 g，与 XL330 同档，孔距要拿实物核。飞特 HD-1910 是 20×34×23，测量部位不一样。
-- **6 V 扭矩：** RD05T 堵转 6 kg·cm，与 XL330（6.1 kg·cm）几乎同量级；HD-1910 堵转 12 kg·cm、额定 3 kg·cm，约是 RD05T 额定（1.5 kg·cm）的两倍。S288 的 0.6 N·m 与 XL330 在 6 V 的堵转同量级，但那是 **12 V** 工况。
-- **电气：** HD-1910（4–8.4 V）与 RD05T（3.6–8.4 V）都可按 2S 锂电设计，HAT 电源改动小于 12 V 的 S288 / HL-2915。上 12 V 就要改电池串数或 DC-DC、以及 15 路堵转电流预算。
-- **针序：** HD-1910 是 **1=Signal / 3=GND**，与 Dynamixel、RD05T、HL-2915 的 **1=GND / 3=Signal** 相反，不能按 XL330 线序直插。
-- **协议与 ID：** 宇树协议要新驱动；**ID 仅 0–14** 盖不住官方 ID 图（腿 10–14 / 20–24，头 30–34，IMU 200）。RD05T ID 0–253，覆盖这张图，但帧格式规格书未给，驱动仍要另写。飞特改寄存器映射的成本相对小。
-
-RD05T 额定 1.5 kg·cm @ 6 V，HD-1910 在 6 V 已是堵转 12 kg·cm、额定 3 kg·cm。不要把 RD05T 当 HD-1910 的第二货源。
-
-### 3.3 电压不同时要改什么
-
-
-| 舵机轨           | 代表型号          | HAT / 电池上至少要动的                                      |
-| ------------- | ------------- | --------------------------------------------------- |
-| ~5 V（3.7–6.0） | XL330-M288    | 基线；与 2S 直供是否降压 **未定**                               |
-| 3.6–8.4 V     | HD-1910、RD05T | 按 2S 锂电或 NP-F550 一类设计；核对过压保护阈值（HD-1910 规格书过压阈 10 V） |
-| 12 V 级        | S288、HL-2915  | 电池串数或升压、舵机轨 MOSFET、连接器与铜箔过流、`imu_to_dxl` 取电是否还从总线来  |
-
-
-总线电流一般比会单个电机的堵转电流大，但肯定不会是所有电机同时堵转，一般比所有电机的额定电流之和还要小，毕竟不是所有电机都同时工作在额定负载。
-
----
-
-
-
-## 4. Microduck 实际通信速率：1 Mbps
-
-硬件最高 4 Mbps **不是** 运行时用的速度。板上 UART 与舵机 EEPROM 都设置为 **1 000 000 bps**。当然4 Mbps为未来更高级的应用打开可能性。
-
-### 4.1 主机口打开就是 1 Mbps
-
-`[robotd-design.md](https://github.com/pollen-robotics/microduck/blob/main/docs/design/robotd-design.md)` §1.1 把总线画死为：
-
-```text
-/dev/ttyS2 · 1 Mbps · Dynamixel protocol v2
-```
-
-15 个舵机 + `imu_to_dxl`（ID 200）共用这一口。这是官方设计文档，不是社区推测。
-
-### 4.2 启动时把舵机寄存器写成「3」
-
-同一份文档 §2.1：`check_and_fix_config` 在启动时断言并纠正 EEPROM：
-
-`return_delay_time=0`，`baud_rate=3`，`pwm_slope=255`，`shutdown=52`。
-
-XL330 手册 Baud Rate(8) 对照表（**官方**）：
-
-
-| 寄存器值    | 波特率           |
-| ------- | ------------- |
-| 0       | 9 600         |
-| 1（出厂默认） | **57 600**    |
-| 2       | 115 200       |
-| **3**   | **1 000 000** |
-| 4       | 2 000 000     |
-| 5       | 3 000 000     |
-| 6       | 4 000 000     |
-| 7       | 4 500 000     |
-
-
-因此 `baud_rate=3` **就是 1 Mbps**。出厂默认是 57.6 kbps，不是 1 Mbps；换一颗没初始化过的 XL330 却用 1 Mbps 去扫，会表现为「总线空的」。运行时把寄存器改到 3，和打开 `/dev/ttyS2` 的 1 Mbps 对齐。
-
-`return_delay_time=0` 与波特率是配套的：出厂 250 → 每设备 500 µs 换向，16 个设备约 8 ms，占 20 ms 拍预算的 40%。这不改变比特率，但决定 1 Mbps 够不够用。
-
-### 4.3 对平替的含义
-
-50 Hz、每拍两次总线事务（再加每秒一次慢采样），在 1 Mbps 半双工上是算过的。平替若默认不是 1 Mbps，要在初始化里改到 **至少 1 Mbps**（或接受降频控制环）。飞特 HL 规格书出厂默认已是 1 Mbps；宇树硬件到 6 Mbps，但自定义协议要自己算一拍字节数。标称「最高 4 Mbps」却把 15 颗丢在 115 200 上，环会直接塌。
-
----
-
-
-
-## 5. 主要来源
-
-- XL330-M288 手册：[https://docs.robotis.com/docs/dxl/model_reference/x_series/xl_series/xl330-m288/](https://docs.robotis.com/docs/dxl/model_reference/x_series/xl_series/xl330-m288/)
-- ROBOTIS 商店规格（空载电流、连续扭矩栏）：[韩国店 XL330-M288-T](https://en.robotis.com/shop_en/item.php?it_id=902-0163-000) · [美国店](https://www.robotis.us/dynamixel-xl330-m288-t/)
-- 控制环与总线寄存器：[robotd-design.md](https://github.com/pollen-robotics/microduck/blob/main/docs/design/robotd-design.md)
-- 板级架构：`[architecture.md](architecture.md)` §1.5、§2.2
-- 宇树 S288：[https://www.unitree.com/cn/DigitalServo](https://www.unitree.com/cn/DigitalServo) · [官方店](https://shop.unitree.com/products/brushless-digital-servo)
-- 飞特 HL-2915-C002 规格书：`hardware_spec/servo/HL-2915-C002_HL-2909-C001串型规格书-20260227.pdf`
-- 飞特 HD-1910-C001 规格书 A/0（2026-09-07）：`hardware_spec/servo/HD-1910-C001串型规格书-20260907.pdf`
-- 飞特 HD-1910 外形图：`hardware_spec/servo/HD-1910M-C001-drawing-20260902.pdf`
-- 伟创 KPower RD05T 规格书：`hardware_spec/servo/KPower-RD05T-spec-2026-09.pdf`
-- 训练执行器模型：`[microduck_rl](https://github.com/pollen-robotics/microduck_rl)` BAM M6（XL330 电压控制律）
+# Servo selection, wiring, and configuration
+
+The current build uses **Feetech HD-1910-C001**. This guide translates the
+upstream actuator comparison and distinguishes official specifications,
+source-derived runtime behavior, planned compatibility, and unresolved details.
+See [architecture.md](architecture.md) for those evidence labels.
+
+Actuators determine mechanical fit, feedback timing, and sim-to-real behavior.
+A compatible connector or similar torque does not make policies interchangeable.
+
+## 1. Microduck reference actuator
+
+The product specification lists 15 motors. The runtime speaks **Dynamixel XL330**.
+Gear ratio, torque, and the BAM M6 training model support **XL330-M288-T** as the
+comparison baseline; the exact retail-production SKU was not confirmed by those
+sources. The higher-speed M077 has a different 77:1 ratio and roughly one-third
+the stall torque. `-T` denotes TTL half-duplex.
+
+### XL330-M288-T specifications
+
+| Property | Value from the cited upstream sources |
+|---|---|
+| Mass | 18 g |
+| Size, W × H × D | 20 × 34 × 26 mm |
+| Ratio | 288.4:1 |
+| Encoder | 12-bit absolute magnetic, ams AS5601, 4096 counts/revolution |
+| Stall torque | 0.42 N·m at 3.7 V / 1.11 A; 0.52 N·m at 5 V / 1.47 A; 0.60 N·m at 6 V / 1.74 A |
+| Continuous torque | Not specified |
+| No-load speed | 76 / 103 / 123 rpm at 3.7 / 5 / 6 V |
+| No-load current | Store lists 0.15 A at 5 V |
+| Standby current | Manual 17 mA; store 15 mA |
+| Supply | 3.7–6.0 V; recommended 5 V |
+| Baud rates | Hardware specification up to 4 Mbps; register table also lists 4.5 Mbps |
+| Runtime baud rate | **1 Mbps** |
+| Connector | Dual TTL 3P daisy-chain, Robot Cable-X3P; 3.3 V logic, 5 V compatible |
+| Pins | 1 GND / 2 VDD / 3 DATA |
+| Protocol | Dynamixel Protocol 2.0, half-duplex, 8N1 |
+| Current-related modes | Mode 0: current; Mode 5: current-based position |
+| Factory mode | Mode 3: position |
+| Feedback | Position, speed, current, PWM, trajectory, temperature, voltage, errors |
+| Case / gears | Engineering plastic |
+| Historical price, September 2026 | Korea $23.90; US $27.49; other cited channels CNY 95–238 |
+
+The historical Korea list price gives roughly $360 for 15 actuators. These are
+inherited price references, not current quotes.
+
+### Why feedback and current control matter
+
+The 50 Hz runtime needs encoder position and velocity, with PWM/current available
+for diagnostics and actuator characterization. It reads fast registers 124–136;
+voltage and temperature are sampled at 1 Hz from 144–146. The standard **61-value
+policy observation uses joint position and velocity**, not separate current/PWM
+dimensions.
+
+Mode 0 controls current/torque; Mode 5 tracks position with a Goal Current limit.
+This supports yielding, contact, mouth gripping, and impact handling.
+The runtime's documented startup corrections set return delay, baud, PWM slope,
+and shutdown mask; they do **not** establish that production uses Mode 5.
+
+Report temperature per joint, including the hottest joint. Averaging temperatures
+can hide a heavily loaded knee. The documented shutdown mask is 52.
+
+## 2. Selection criteria
+
+| Criterion | Requirement |
+|---|---|
+| Mechanical fit | Check envelope, holes, shaft/horn, and cable exit |
+| Actuator type | Magnetic encoder and bus feedback; current control or current-limited position capability |
+| Dynamics | Check rated/stall torque, speed, voltage, mass, and inertia |
+| Electrical interface | Three-wire TTL with verified connector orientation and pin order |
+| Protocol | A new RobotIo driver may be needed; Dynamixel, Feetech, and Unitree protocols are generally different |
+| Quality and cost | Traceable batches and lifetime testing matter across 15 actuators |
+
+A supply change affects cell count, HAT rail, MOSFET/current ratings, connectors,
+and the IMU adapter power input. The reference NP-F550 is 2S / 7.2 V nominal,
+while retail XL330 tops out at 6 V; the original guide marks the production
+power arrangement unresolved.
+
+Use the HD-1910 policies in this repository for the HD-1910 build. Other actuators
+need their own characterization and policy validation/retraining while preserving
+the **61 → 14** interface.
+
+## 3. Candidate comparison
+
+### Source documents
+
+- **HD-1910-C001:** Feetech A/0 specification, September 7, 2026; drawing also uses HD-1910M-C001. Rated operating range 4–8.4 V.
+- **Unitree YS-342026-S288:** plastic-case brushless servo; recommended 12.6 V, 288.35:1. J288 is a heavier metal variant with a different voltage range.
+- **KPower RD05T:** September 2026 specification; 6 kg·cm dual-axis micro servo. Current feedback is listed; a constant-current operating mode is not explicitly specified.
+- **HL-2915-C002 / HL-2909-C001:** the source describes HL-2915 as an earlier name, but the available specification cover says HL-2915-C002. Do not assume a separate HL-2909 electrical specification exists.
+
+Manufacturer PDFs retain their original contents; the key values are translated
+below and their filenames are English.
+
+### Specifications
+
+Compare at **6 V** where supplied. Unitree and HL-2915 lack a 6 V operating point;
+their 12 V figures are labeled. 1 kg·cm is approximately 0.098 N·m.
+
+| Property | XL330-M288-T | HD-1910-C001 | YS-342026-S288 | KPower RD05T | HL-2915-C002 |
+|---|---|---|---|---|---|
+| Mass | 18 g | 21 ± 2 g | 19.5 g | 18 g | 22.5 ± 2 g |
+| Envelope, mm | 20 × 34 × 26 per manual | 20 × 34 × 23; 20 × 34 × 29 with horn | 20 × 34 × 26 | 26 × 20 × 34 | 34 × 20 × 23 |
+| Gear ratio | 288.4:1 | 320:1 | 288.35:1 | Unspecified | 320:1 |
+| Comparison voltage | 6 V, maximum | 6 V | 12 V | 6 V | 12 V |
+| Stall torque | 0.60 N·m / about 6.1 kg·cm | 12 kg·cm / 1.18 N·m | 0.6 N·m at 12 V | 6 kg·cm / 0.59 N·m | 8.9 kg·cm / 0.87 N·m at 12 V |
+| Rated torque | Unspecified | 3 kg·cm / 0.29 N·m | Unspecified | 1.5 kg·cm / 0.15 N·m | 2.9 kg·cm / 0.28 N·m at 12 V |
+| No-load speed | 123 rpm | 92 rpm | 157 rpm at 12 V | 125 rpm, 0.08 s/60° | 77 rpm at 12 V |
+| Supply range | 3.7–6.0 V | 4–8.4 V | 6.4–12.6 V | 3.6–8.4 V | 9–14 V |
+| Standby / no-load / rated / stall current | 17 mA / unspecified at 6 V / — / 1.74 A | 20 / ≤180 / 690 / 1600 mA | 50 / 270 / — / — mA at 12 V | 10 / 280 / — / 1740 mA | 42 / 140 / 200 / 600 mA at 12 V |
+| Maximum baud | 4 Mbps specification | 1 Mbps | 6 Mbps | 4 Mbps | 1 Mbps |
+| Connector | JST 3P TTL | AMP2.0-3P | TTL multidrop | EH2.54-3P | AMP-3 |
+| Pins | 1 GND / 2 VDD / 3 DATA | **1 Signal / 2 Vcc / 3 GND** | Consult vendor | 1 GND / 2 VCC / 3 TTL | 1 GND / 2 Vcc / 3 Signal |
+| Protocol | Dynamixel 2.0 | Feetech, half-duplex 8N1 | Unitree-specific | Half-duplex 8N1; frame format not supplied | Feetech, half-duplex 8N1 |
+| Force/current control | Modes 0 / 5 | Mode 2 constant current; default mode 4 PD position | Torque + stiffness/damping hybrid | Not explicitly specified | Mode 2 constant current; output register 44 |
+| Feedback | Position/speed/current/voltage/temperature/PWM | Position/speed/current/voltage/temperature/load | Rotor torque/angle, output angle, velocity, temperature, voltage | Position/current/speed/voltage/temperature | Load/position/speed/voltage/current/temperature |
+| Encoder | 12-bit absolute output | 12-bit magnetic | Dual absolute; rotor 15-bit plus output | Magnetic, 360°, 0.088°/count | 12-bit magnetic |
+| Motor / gears | Iron-core / plastic | Coreless / metal | Brushless / plastic | Brushed / POM | Iron-core / metal |
+| IDs | 0–252 | 0–253; factory 1 | **0–14** | 0–253 | 0–253; factory 1 |
+| Historical price | $23.90–27.49 | CNY 123 presale | $29 official listing | Unresolved | Unresolved |
+
+The upstream comparison table gave conflicting XL330 dimensions (23 / 29 mm
+alongside the manual's 26 mm). Use the actual drawing and mounting surfaces
+rather than treating those envelopes as interchangeable.
+The root README also gives a different historical HD-1910 price and an
+unspecified-voltage speed figure.
+
+### HD-1910 voltage points
+
+| Voltage | No-load speed | Stall torque | Rated torque | Stall current |
+|---|---|---|---|---|
+| 4.8 V | 73 rpm | 9 kg·cm | 2.2 kg·cm | 1.2 A |
+| 6 V | 92 rpm | 12 kg·cm | 3 kg·cm | 1.6 A |
+| 7.4 V | 113 rpm | 15 kg·cm | 3.7 kg·cm | 2 A |
+
+Specified torque constant: **7.5 kg·cm/A**.
+
+RD05T at 6 / 5 V: no-load 125 / 100 rpm (0.08 / 0.10 s per 60°);
+stall 6 / 5.2 kg·cm; rated 1.5 / 1.2 kg·cm; stall current 1740 / 1470 mA.
+
+### Practical implications
+
+- HD-1910's **pin 1 / pin 3 order is reversed** relative to the listed Dynamixel, RD05T, and HL-2915 connectors. Do not plug in an XL330-style cable without checking orientation and polarity.
+- Unitree's ID range 0–14 cannot directly represent the joint map below or IMU ID 200.
+- RD05T covers the ID range but needs a verified protocol implementation; its rated torque is half the HD-1910's at 6 V.
+- Similar size does not establish matching hole spacing or passive-horn clearance.
+- A 12 V actuator requires a different power design. HD-1910 and RD05T can be considered for a 2S design, subject to protection and actual component ratings.
+- The HD-1910 specification lists a 10 V overvoltage threshold; this is **not** its normal maximum operating voltage, which remains 8.4 V.
+- Size wiring and supply for measured simultaneous loads and transients; a single-servo current figure is not a complete robot power budget.
+
+## 4. Bus rate and IDs
+
+The documented reference bus is `/dev/ttyS2`, **1,000,000 bps**, Dynamixel
+Protocol 2.0, shared by 15 servos and IMU ID 200.
+A Feetech driver must use the appropriate vendor protocol and register map.
+
+| Group | IDs and joints |
+|---|---|
+| Right leg | 10 hip_yaw; 11 hip_roll; 12 hip_pitch; 13 knee; 14 ankle |
+| Left leg | 20 hip_yaw; 21 hip_roll; 22 hip_pitch; 23 knee; 24 ankle |
+| Head/neck/mouth | 30 neck_pitch; 31 head_pitch; 32 head_yaw; 33 head_roll; 34 mouth |
+| Body IMU | 200 |
+
+Configure and label **one unmounted servo at a time** before connecting the full
+chain, so factory ID collisions do not make configuration ambiguous.
+Use the datasheet for that servo's baud register; the XL330 values below are
+not Feetech configuration values.
+
+### XL330 startup settings
+
+The reference `check_and_fix_config` enforces:
+`return_delay_time=0`, `baud_rate=3`, `pwm_slope=255`, `shutdown=52`.
+
+| XL330 Baud Rate(8) value | bps |
+|---|---:|
+| 0 | 9,600 |
+| 1, factory default | 57,600 |
+| 2 | 115,200 |
+| 3 | 1,000,000 |
+| 4 | 2,000,000 |
+| 5 | 3,000,000 |
+| 6 | 4,000,000 |
+| 7 | 4,500,000 |
+
+An unconfigured XL330 at 57,600 bps will not answer a 1 Mbps scan.
+The factory return delay of 250 corresponds to 500 µs per device; across 16
+devices that is about 8 ms of a 20 ms control period. Reducing delay is separate
+from setting baud rate.
+
+The 50 Hz design budgets two bus transactions per tick plus slow telemetry.
+Validate the alternative protocol's packet lengths and timing; do not run the
+15-servo chain at a low factory baud and assume the same timing contract.
+
+## 5. Sources
+
+- [XL330-M288 manual](https://docs.robotis.com/docs/dxl/model_reference/x_series/xl_series/xl330-m288/)
+- [ROBOTIS Korea](https://en.robotis.com/shop_en/item.php?it_id=902-0163-000), [US](https://www.robotis.us/dynamixel-xl330-m288-t/)
+- [robotd control loop](https://github.com/pollen-robotics/microduck/blob/main/docs/design/robotd-design.md), [rustypot](https://github.com/pollen-robotics/rustypot)
+- [Unitree digital servo](https://www.unitree.com/cn/DigitalServo), [store](https://shop.unitree.com/products/brushless-digital-servo)
+- [HD-1910 specification, A/0, 2026-09-07](../hardware_spec/servo/HD-1910-C001-spec-20260907.pdf)
+- [HD-1910 drawing](../hardware_spec/servo/HD-1910M-C001-drawing-20260902.pdf)
+- [HL-2915 / HL-2909 specification, A/0, 2026-02-27](../hardware_spec/servo/HL-2915-C002_HL-2909-C001-spec-20260227.pdf)
+- [KPower RD05T specification](../hardware_spec/servo/KPower-RD05T-spec-2026-09.pdf)
+- [BAM / training](https://github.com/pollen-robotics/microduck_rl)
 

@@ -1,96 +1,114 @@
-# OpenMicroDuck 结构说明
+# Structure, printing, and assembly
 
-> 优化结构版本：**v0.1**
+> Structural revision: **v0.1**
 
-本仓库内的结构经过修改以适配舵机 **HD1910**，与之结构相同的还有 **HL2909** 舵机。同时优化了部分结构，让它更适合 3D 打印、也更加稳定。
+The modified parts fit **HD-1910** servos; the upstream guide also lists
+**HL-2909** as mechanically compatible. Changes improve printability and rigidity.
 
-## 打印与装配
+## Print and assemble
 
-- 使用 Bambu Studio 直接打印已经摆盘好的 `cad/openmicroduck.3mf` 即可。
-- 装配参考文件：`cad/openmicroduck-assembly-opt.stl`。
-- 散件文件：`cad/psrts`。
-- BOM 表（含结构件与电器件）：[bom.md](bom.md)
+- Open [`cad/openmicroduck.3mf`](../cad/openmicroduck.3mf) in Bambu Studio for the arranged print project. Check its printer, material, supports, and plate settings for your printer before printing.
+- Use [`cad/openmicroduck-assembly-opt.stl`](../cad/openmicroduck-assembly-opt.stl) as the assembly reference.
+- Individual files are in [`cad/parts/`](../cad/parts/).
+- See the [BOM](bom.md) for electronics, fasteners, and the base structural-parts list.
+- PLA is the documented structural material; TPU-95 or silicone pads are options for the soles.
+- Print one servo-mounting part and test its fit with an actual HD-1910 before committing to all plates.
 
-## 结构差异（舵机）
+There are **38 STL files** in `cad/parts/`, including alternatives. The base BOM
+lists **33 parts**, one of each. The additional files are `battery_holder_18650`,
+`battery_holder_21700`, `left_shell_battery_opt`, `right_shell_battery_opt`, and
+`power_support_battery_opt`. Select variants for your battery and layout; do not
+assume all 38 files belong in one assembly.
 
-MicroDuck 上使用的舵机大部分要拆掉副舵盘来安装，且使用 XL330舵机，与本仓库兼容的舵机在拆掉副舵盘后有明显的结构差异：
+## Servo geometry
 
-![](assets/structure/xl330-288-rear.png)![](assets/structure/1910-rear.png)
+Many original Microduck joints require removing the passive rear servo horn.
+After removal, the XL330 has a **recess**, while the HD-1910 has a **protrusion**.
+This difference explains most of the structural changes.
 
-XL330 在拆掉副舵盘后是**凹下去**的，而 HD1910 是**突起的**——本仓库大部分结构变化主要由这一点引起。
+![XL330 rear](assets/structure/xl330-288-rear.png)
+![HD-1910 rear](assets/structure/1910-rear.png)
 
-## 优化内容
+## Head
 
-### 头部
+The HD-1910 rear protrusion originally interfered with a screw post.
 
-- **优化前**：HD1910 的突起部分会与后面的螺丝柱发生干涉（下图）。
+![Original interference](assets/structure/head-opt.png)
 
-![](assets/structure/head-opt.png) - **优化后**：切掉螺丝柱一部分消除干涉，不影响螺丝安装。 ![](assets/structure/head-opt1.png)![](assets/structure/head-opt2.png)
+Part of the post was removed to clear the servo while retaining screw attachment.
 
-### 下巴
+![Head clearance change](assets/structure/head-opt1.png)
+![Modified head](assets/structure/head-opt2.png)
 
-由于 3D 打印精度的缘故，下巴内的 `jaw_soft` 会与 `bottom_head_shell` 摩擦，导致开嘴困难甚至开不了嘴。已将 `jaw_soft` 缩短消除影响。
+## Jaw
 
-![](assets/structure/jaw-opt.png)
+Printing tolerances can make `jaw_soft` rub against `bottom_head_shell`, preventing
+the mouth from opening. The modified `jaw_soft` is shorter to provide clearance.
 
-### 脖子
+![Jaw clearance](assets/structure/jaw-opt.png)
 
-加厚脖子连接件。原版仅 1 mm 厚，3D 打印风险较高。
+## Neck
 
-![](assets/structure/neck-opt.png)
+The neck connector was thickened; the original 1 mm wall was difficult to print reliably.
 
-### 躯干
+![Thicker neck connector](assets/structure/neck-opt.png)
 
-**优化前**：`trunk_base` 结构薄弱，不利于 3D 打印，且舵机只有 2 个孔固定，更加脆弱。
+## Trunk
 
-![](assets/structure/trunk-org.png)
+The original `trunk_base` was thin and held each servo with only two mounting holes.
 
-**优化后**：
+![Original trunk](assets/structure/trunk-org.png)
 
-- 增厚 `trunk_base`；
-- 每个舵机都有 3 个孔固定；
-- 优化 `power_support` 固定方式，以舵机为基准固定；
-- 修改陀螺仪固定孔，兼容 LSM6DSX 陀螺仪。
+The revised structure:
 
-![](assets/structure/trunk-opt.png)![](assets/structure/trunk-opt1.png)![](assets/structure/trunk-opt2.png)
+- Thickens `trunk_base`.
+- Uses three mounting holes per servo.
+- Mounts `power_support` relative to the servo.
+- Adjusts IMU mounting holes for an LSM6DSX module.
 
-### 胯部
+![Trunk revision](assets/structure/trunk-opt.png)
+![Trunk mounting](assets/structure/trunk-opt1.png)
+![Trunk detail](assets/structure/trunk-opt2.png)
 
-**优化前**：yaw 部分由两个零件锁定舵机，3D 打印后实测稳定性较差，且不与 HD1910 兼容；连接的螺丝孔位还导致 `trunk_base` 舵机前方不能拧螺丝。
+## Hip
 
-![](assets/structure/yaw-org.png)![](assets/structure/yaw-org1.png)![](assets/structure/yaw-org2.png)
+The original yaw mount used two parts, was insufficiently rigid after printing,
+and did not fit the HD-1910. Its screw positions also blocked access to the front
+servo screws on `trunk_base`.
 
-**优化后**：
+![Original hip](assets/structure/yaw-org.png)
+![Original hip detail](assets/structure/yaw-org1.png)
+![Original screw access](assets/structure/yaw-org2.png)
 
-- yaw 改为一体式，结构简单稳固；
-- 为上述 `trunk_base` 的舵机留出拧螺丝的位置。
+The revised yaw mount is one piece and leaves access for those screws.
 
-![](assets/structure/yaw-opt1.png)![](assets/structure/yaw-opt3.png)
+![Revised hip](assets/structure/yaw-opt1.png)
+![Revised screw access](assets/structure/yaw-opt3.png)
 
-### 腿部
+## Legs
 
-- **upper_leg**：
-  - 加厚了 `upper_leg_rigidity_plate`；
-  - 修改 `upper_leg` 使其兼容 HD1910：去掉两个定位柱，让线路更好走、更容易安装。
+- `upper_leg_rigidity_plate` is thicker.
+- `upper_leg` fits the HD-1910; two locating posts were removed to improve cable routing and assembly.
+- `leg` was also modified for the HD-1910.
 
-![](assets/structure/upper-leg-rigidity-plate-opt.png)![](assets/structure/upperleg-opt.png)
+![Rigidity plate](assets/structure/upper-leg-rigidity-plate-opt.png)
+![Upper-leg revision](assets/structure/upperleg-opt.png)
+![Original leg](assets/structure/leg-org.png)
+![Revised leg](assets/structure/leg-opt.png)
 
-- **leg**：优化使其兼容 HD1910。
+## Ankle
 
-![](assets/structure/leg-org.png)![](assets/structure/leg-opt.png)
+Originally, the bearing was inserted from inside before fitting the ankle to the
+leg. This was difficult with either servo unless the part was very flexible.
+The flat internal surface also interfered with the servo and restricted rotation.
 
-### 脚（ankle）
+![Original ankle](assets/structure/ankle-org.png)
 
-**优化前**：轴承从内部安装，再装到腿部模组上——除非这个部件很软，否则不论是 XL330 还是 HD1910 都很难安装到腿上；且底部是平的，会与舵机干涉，导致脚无法转动。
+The revised ankle has an arched interior for rotation clearance and a flexible rib:
 
-![](assets/structure/ankle-org.png)
+1. The ankle fits onto the leg module more easily.
+2. The bearing clips in from outside.
+3. The foot limits clip movement, reducing the chance that the bearing comes loose.
 
-**优化后**：
-
-- 将内部改成圆弧结构，让脚能顺利转动；
-- 增加一个弹筋结构：
-  1. 让 ankle 更顺利地安装到腿部模组（Leg module）上；
-  2. 通过卡扣结构从外侧能更好地安装轴承；
-  3. 通过 foot 限位卡扣，极大缩小轴承松脱风险。
-
-![](assets/structure/ankle-opt.png)![](assets/structure/ankle-opt2.png)
+![Revised ankle](assets/structure/ankle-opt.png)
+![Ankle bearing retention](assets/structure/ankle-opt2.png)

@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 760 900" width="760" height="900" role="img" aria-label="50 Hz 控制环：一拍里的数据流">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 760 900" width="760" height="900" role="img" aria-label="50 Hz control loop: data flow within one tick">
 
   <defs>
     <marker id="ao" viewBox="0 0 12 10" refX="10.5" refY="5"
@@ -15,29 +15,29 @@
   </defs>
 
   <rect x="0" y="0" width="760" height="900" fill="#F7F9FC" rx="16"/>
-  <text x="24" y="34" font-family="'Microsoft YaHei', '微软雅黑', 'PingFang SC', 'Noto Sans SC', sans-serif" font-size="16" font-weight="700" fill="#1B3A6B">50 Hz 控制环：一拍里的数据流</text>
+  <text x="24" y="34" font-family="'Arial', 'Helvetica', sans-serif" font-size="16" font-weight="700" fill="#1B3A6B">50 Hz control loop: data flow within one tick</text>
 
   <rect x="170" y="56" width="420" height="72" rx="10" fill="#E6F5F8" stroke="#2F7A8A" stroke-width="1.9"/>
-    <text x="380.0" y="87.9" text-anchor="middle" font-family="'Microsoft YaHei', '微软雅黑', 'PingFang SC', 'Noto Sans SC', sans-serif" font-size="14" font-weight="600" fill="#1B3A6B">sync_read</text>
-    <text x="380.0" y="105.9" text-anchor="middle" font-family="'Microsoft YaHei', '微软雅黑', 'PingFang SC', 'Noto Sans SC', sans-serif" font-size="13" font-weight="400" fill="#1B3A6B">IMU + 15 舵机 · 寄存器 124–136</text>
+    <text x="380.0" y="87.9" text-anchor="middle" font-family="'Arial', 'Helvetica', sans-serif" font-size="14" font-weight="600" fill="#1B3A6B">sync_read</text>
+    <text x="380.0" y="105.9" text-anchor="middle" font-family="'Arial', 'Helvetica', sans-serif" font-size="13" font-weight="400" fill="#1B3A6B">IMU + 15 servos · registers 124–136</text>
   <rect x="170" y="156" width="420" height="84" rx="10" fill="#EAF2FB" stroke="#3A6A9A" stroke-width="1.9"/>
-    <text x="380.0" y="193.9" text-anchor="middle" font-family="'Microsoft YaHei', '微软雅黑', 'PingFang SC', 'Noto Sans SC', sans-serif" font-size="14" font-weight="600" fill="#1B3A6B">建观测  [f32; 61]</text>
-    <text x="380.0" y="211.9" text-anchor="middle" font-family="'Microsoft YaHei', '微软雅黑', 'PingFang SC', 'Noto Sans SC', sans-serif" font-size="13" font-weight="400" fill="#1B3A6B">gyro · 投影重力 · 关节 · 上拍动作 · 指令</text>
+    <text x="380.0" y="193.9" text-anchor="middle" font-family="'Arial', 'Helvetica', sans-serif" font-size="14" font-weight="600" fill="#1B3A6B">Build observation [f32; 61]</text>
+    <text x="380.0" y="211.9" text-anchor="middle" font-family="'Arial', 'Helvetica', sans-serif" font-size="13" font-weight="400" fill="#1B3A6B">Gyro · gravity · joints · previous action · command</text>
   <rect x="170" y="268" width="420" height="82" rx="10" fill="#EAF2FB" stroke="#3A6A9A" stroke-width="1.9"/>
-    <text x="380.0" y="304.9" text-anchor="middle" font-family="'Microsoft YaHei', '微软雅黑', 'PingFang SC', 'Noto Sans SC', sans-serif" font-size="14" font-weight="600" fill="#1B3A6B">技能仲裁</text>
-    <text x="380.0" y="322.9" text-anchor="middle" font-family="'Microsoft YaHei', '微软雅黑', 'PingFang SC', 'Noto Sans SC', sans-serif" font-size="13" font-weight="400" fill="#1B3A6B">翻滚 &gt; 踢 &gt; 拾取 &gt; 起坐 &gt; 站 &gt; 走</text>
+    <text x="380.0" y="304.9" text-anchor="middle" font-family="'Arial', 'Helvetica', sans-serif" font-size="14" font-weight="600" fill="#1B3A6B">Skill arbitration</text>
+    <text x="380.0" y="322.9" text-anchor="middle" font-family="'Arial', 'Helvetica', sans-serif" font-size="13" font-weight="400" fill="#1B3A6B">Roll &gt; kick &gt; pick &gt; sit/stand &gt; stand &gt; walk</text>
   <rect x="170" y="378" width="420" height="82" rx="10" fill="#F3EAF8" stroke="#7A4A9A" stroke-width="1.9"/>
-    <text x="380.0" y="414.9" text-anchor="middle" font-family="'Microsoft YaHei', '微软雅黑', 'PingFang SC', 'Noto Sans SC', sans-serif" font-size="14" font-weight="600" fill="#1B3A6B">ONNX 推理</text>
-    <text x="380.0" y="432.9" text-anchor="middle" font-family="'Microsoft YaHei', '微软雅黑', 'PingFang SC', 'Noto Sans SC', sans-serif" font-size="13" font-weight="400" fill="#1B3A6B">obs 61  →  act 14</text>
+    <text x="380.0" y="414.9" text-anchor="middle" font-family="'Arial', 'Helvetica', sans-serif" font-size="14" font-weight="600" fill="#1B3A6B">ONNX inference</text>
+    <text x="380.0" y="432.9" text-anchor="middle" font-family="'Arial', 'Helvetica', sans-serif" font-size="13" font-weight="400" fill="#1B3A6B">obs 61  →  act 14</text>
   <rect x="170" y="488" width="420" height="82" rx="10" fill="#EAF2FB" stroke="#3A6A9A" stroke-width="1.9"/>
-    <text x="380.0" y="524.9" text-anchor="middle" font-family="'Microsoft YaHei', '微软雅黑', 'PingFang SC', 'Noto Sans SC', sans-serif" font-size="14" font-weight="600" fill="#1B3A6B">家位 + scale × action</text>
-    <text x="380.0" y="542.9" text-anchor="middle" font-family="'Microsoft YaHei', '微软雅黑', 'PingFang SC', 'Noto Sans SC', sans-serif" font-size="13" font-weight="400" fill="#1B3A6B">头 / 腿一阶低通</text>
+    <text x="380.0" y="524.9" text-anchor="middle" font-family="'Arial', 'Helvetica', sans-serif" font-size="14" font-weight="600" fill="#1B3A6B">Home + scale × action</text>
+    <text x="380.0" y="542.9" text-anchor="middle" font-family="'Arial', 'Helvetica', sans-serif" font-size="13" font-weight="400" fill="#1B3A6B">Head / leg low-pass filters</text>
   <rect x="170" y="598" width="420" height="94" rx="10" fill="#FDEEEE" stroke="#A05050" stroke-width="1.9"/>
-    <text x="380.0" y="640.9" text-anchor="middle" font-family="'Microsoft YaHei', '微软雅黑', 'PingFang SC', 'Noto Sans SC', sans-serif" font-size="14" font-weight="600" fill="#1B3A6B">safety.apply</text>
-    <text x="380.0" y="658.9" text-anchor="middle" font-family="'Microsoft YaHei', '微软雅黑', 'PingFang SC', 'Noto Sans SC', sans-serif" font-size="13" font-weight="400" fill="#1B3A6B">拒绝 NaN · 钳行程 · 死区（断指令则站住）</text>
+    <text x="380.0" y="640.9" text-anchor="middle" font-family="'Arial', 'Helvetica', sans-serif" font-size="14" font-weight="600" fill="#1B3A6B">safety.apply</text>
+    <text x="380.0" y="658.9" text-anchor="middle" font-family="'Arial', 'Helvetica', sans-serif" font-size="13" font-weight="400" fill="#1B3A6B">Reject NaN · clamp range · stale command → stand</text>
   <rect x="170" y="720" width="420" height="82" rx="10" fill="#FDECEE" stroke="#A84A62" stroke-width="1.9"/>
-    <text x="380.0" y="756.9" text-anchor="middle" font-family="'Microsoft YaHei', '微软雅黑', 'PingFang SC', 'Noto Sans SC', sans-serif" font-size="14" font-weight="600" fill="#1B3A6B">sync_write</text>
-    <text x="380.0" y="774.9" text-anchor="middle" font-family="'Microsoft YaHei', '微软雅黑', 'PingFang SC', 'Noto Sans SC', sans-serif" font-size="13" font-weight="400" fill="#1B3A6B">写入 15 个目标位置</text>
+    <text x="380.0" y="756.9" text-anchor="middle" font-family="'Arial', 'Helvetica', sans-serif" font-size="14" font-weight="600" fill="#1B3A6B">sync_write</text>
+    <text x="380.0" y="774.9" text-anchor="middle" font-family="'Arial', 'Helvetica', sans-serif" font-size="13" font-weight="400" fill="#1B3A6B">Write 15 target positions</text>
   <line x1="380.0" y1="128" x2="380.0" y2="156" stroke="#4A6A88" stroke-width="1.6" fill="none" marker-end="url(#ao)"/>
   <line x1="380.0" y1="240" x2="380.0" y2="268" stroke="#4A6A88" stroke-width="1.6" fill="none" marker-end="url(#ao)"/>
   <line x1="380.0" y1="350" x2="380.0" y2="378" stroke="#4A6A88" stroke-width="1.6" fill="none" marker-end="url(#ao)"/>
@@ -45,22 +45,22 @@
   <line x1="380.0" y1="570" x2="380.0" y2="598" stroke="#4A6A88" stroke-width="1.6" fill="none" marker-end="url(#ao)"/>
   <line x1="380.0" y1="692" x2="380.0" y2="720" stroke="#4A6A88" stroke-width="1.6" fill="none" marker-end="url(#ao)"/>
   <rect x="24" y="156" width="128" height="84" rx="10" fill="#FFF4E5" stroke="#C47B2B" stroke-width="1.9"/>
-    <text x="88.0" y="194.2" text-anchor="middle" font-family="'Microsoft YaHei', '微软雅黑', 'PingFang SC', 'Noto Sans SC', sans-serif" font-size="12" font-weight="600" fill="#1B3A6B">意图快照</text>
-    <text x="88.0" y="210.2" text-anchor="middle" font-family="'Microsoft YaHei', '微软雅黑', 'PingFang SC', 'Noto Sans SC', sans-serif" font-size="11" font-weight="400" fill="#1B3A6B">速度 / 头 / 身体</text>
+    <text x="88.0" y="194.2" text-anchor="middle" font-family="'Arial', 'Helvetica', sans-serif" font-size="12" font-weight="600" fill="#1B3A6B">Intent snapshot</text>
+    <text x="88.0" y="210.2" text-anchor="middle" font-family="'Arial', 'Helvetica', sans-serif" font-size="11" font-weight="400" fill="#1B3A6B">Speed / head / body</text>
   <line x1="152" y1="198" x2="170" y2="198" stroke="#4A6A88" stroke-width="1.6" fill="none" marker-end="url(#ao)"/>
-  <text x="24" y="846" font-family="'Microsoft YaHei', '微软雅黑', 'PingFang SC', 'Noto Sans SC', sans-serif" font-size="12" fill="#1B3A6B">每秒另读电压 / 温度（寄存器 144–146）。摔倒检测只报告；limp_fall 可短暂接管关节。</text>
-  <g font-family="'Microsoft YaHei', '微软雅黑', 'PingFang SC', 'Noto Sans SC', sans-serif" font-size="11" fill="#1B3A6B">
+  <text x="24" y="846" font-family="'Arial', 'Helvetica', sans-serif" font-size="12" fill="#1B3A6B">Voltage / temperature: 1 Hz (144–146). Fall reports and limp_fall override are separate.</text>
+  <g font-family="'Arial', 'Helvetica', sans-serif" font-size="11" fill="#1B3A6B">
     <rect x="24" y="868" width="14" height="14" rx="4" fill="#E6F5F8" stroke="#2F7A8A" stroke-width="1.4"/>
-    <text x="44" y="880">采样</text>
-    <rect x="102" y="868" width="14" height="14" rx="4" fill="#FFF4E5" stroke="#C47B2B" stroke-width="1.4"/>
-    <text x="122" y="880">意图</text>
-    <rect x="180" y="868" width="14" height="14" rx="4" fill="#EAF2FB" stroke="#3A6A9A" stroke-width="1.4"/>
-    <text x="200" y="880">控制步骤</text>
-    <rect x="270" y="868" width="14" height="14" rx="4" fill="#F3EAF8" stroke="#7A4A9A" stroke-width="1.4"/>
-    <text x="290" y="880">策略</text>
-    <rect x="348" y="868" width="14" height="14" rx="4" fill="#FDEEEE" stroke="#A05050" stroke-width="1.4"/>
-    <text x="368" y="880">安全层</text>
-    <rect x="426" y="868" width="14" height="14" rx="4" fill="#FDECEE" stroke="#A84A62" stroke-width="1.4"/>
-    <text x="446" y="880">下发</text>
+    <text x="44" y="880">Sample</text>
+    <rect x="105.0" y="868" width="14" height="14" rx="4" fill="#FFF4E5" stroke="#C47B2B" stroke-width="1.4"/>
+    <text x="125.0" y="880">Intent</text>
+    <rect x="186.0" y="868" width="14" height="14" rx="4" fill="#EAF2FB" stroke="#3A6A9A" stroke-width="1.4"/>
+    <text x="206.0" y="880">Control step</text>
+    <rect x="306.0" y="868" width="14" height="14" rx="4" fill="#F3EAF8" stroke="#7A4A9A" stroke-width="1.4"/>
+    <text x="326.0" y="880">Policy</text>
+    <rect x="387.0" y="868" width="14" height="14" rx="4" fill="#FDEEEE" stroke="#A05050" stroke-width="1.4"/>
+    <text x="407.0" y="880">Safety</text>
+    <rect x="468.0" y="868" width="14" height="14" rx="4" fill="#FDECEE" stroke="#A84A62" stroke-width="1.4"/>
+    <text x="488.0" y="880">Write</text>
   </g>
 </svg>

@@ -1,320 +1,277 @@
-# OpenMicroDuck / Microduck 架构
+# OpenMicroDuck / Microduck architecture
 
-本文整理软件与硬件如何拼在一起：策略在哪训练、模型长什么样、板载如何采样 / 推理 / 驱动电机与扬声器，以及各模块靠什么接口通信。
+This guide describes the inherited training, deployment, sensing, and actuator
+architecture. The software follows the same sim-to-real loop: train offboard,
+export ONNX, and execute a closed loop onboard at 50 Hz. Hardware selection,
+power, and public design availability differ.
 
-**软件架构不区分 Microduck 与本仓库规划。** 两边走同一条 sim-to-real 回路：离线训出 ONNX，板上 50 Hz 闭环执行。硬件选型、电源与开源边界不同，见后两节。
+| Evidence label | Meaning |
+|---|---|
+| Official | Product information or Pollen runtime / training source and design documents |
+| Source-derived | Reconstruction from device paths, I²C addresses, and registers; not a production BOM |
+| Planned | OpenMicroDuck design intent |
+| Unresolved | Conflicting sources or parts not yet finalized |
 
-证据分级：
+Sources are indexed in [reference.md](reference.md). These are translated
+engineering notes from the imported snapshot, not a fresh audit of upstream.
+For licensing, use [LICENSE](../LICENSE) and [NOTICE.md](../NOTICE.md); earlier
+planning text mentioning CERN-OHL-S does not replace the included licenses.
 
+## 1. Software
 
-| 标记       | 含义                                                             |
-| -------- | -------------------------------------------------------------- |
-| **官方**   | 产品页、新闻稿，或 `pollen-robotics/microduck` / `microduck_rl` 源码与设计文档 |
-| **源码还原** | 运行时写死的设备路径、I²C 地址、寄存器；社区据此还原，非官方 BOM                           |
-| **规划**   | 本仓库 README 与规划文档                                               |
-| **未定**   | 公开材料互相矛盾，或量产件尚未冻结                                              |
+The pipeline accepts behavioral intent and applies safety limits before issuing
+motor targets. Camera images and 8×8 ToF matrices do **not** enter the standard
+walking policy; perception publishes small features to higher-level behavior.
 
+![Training and onboard execution](diagrams/software-overview.svg)
 
-条目来源见 `[reference.md](reference.md)`。Microduck 机械 / 整机电控并未作为开源硬件发布；HAT 板除外。
+### 1.1 Training
 
----
+[`microduck_rl`](https://github.com/pollen-robotics/microduck_rl) uses
+**mjlab / MuJoCo Warp + PPO**. Training runs offboard with CUDA; Hugging Face Jobs
+is an alternative to a local GPU. Community ports target other compute stacks.
 
+Actuator modeling is central to sim-to-real transfer:
 
+- **BAM M6:** XL330 voltage control, back EMF, Coulomb/Stribeck friction, and load-dependent friction.
+- **Domain randomization:** battery voltage, load-induced voltage drop, command delay, and friction.
+- **Backlash variants:** ±1° gear play at each joint, with observations taken on the encoder side after the play.
 
-## 1. 软件架构（通用）
+Walking, standing, sit/stand, pickup, kicking, rolling, and skating are separate
+tasks with a shared observation width. The browser sandbox uses MuJoCo WASM and
+onnxruntime-web at 50 Hz for policy playback; it does not replace training.
 
-整条链路是「离线训、板上跑、意图进、安全层出」。摄像头图像和 8×8 ToF **不进入**标准行走策略；它们走感知侧，只把几十字节的特征喂给行为层。
+### 1.2 Policy contract
 
-![软件总览：离线训练与板载执行](diagrams/software-overview.svg)
+Use the exported **ONNX**, with observation normalization embedded in the graph.
+Do not replace it with an ad hoc checkpoint conversion.
 
-### 1.1 训练在哪做
+| Interface | Size | Contents |
+|---|---|---|
+| Observation | 61 | gyro (3), projected gravity (3), joint position (14), joint velocity (14), previous action (14), command (13) |
+| Action | 14 | Policy-controlled joint targets; excludes the mouth |
+| Control rate | 50 Hz | One policy inference per tick |
 
-训练不在机器人上。官方仓库 `[microduck_rl](https://github.com/pollen-robotics/microduck_rl)` 用 **mjlab（MuJoCo Warp）+ PPO**。需要 CUDA；没有本地 GPU 时可用 Hugging Face Jobs。
+The 13 command values contain velocity `vx, vy, vyaw` (3), head targets (4),
+and body pose (6). Body x/y/yaw are unbound in the described training setup and
+nominally zero.
 
-训练里真正决定能否上真机的，是执行器模型而不是视觉：
+The mouth is the fifteenth axis. Higher-level behavior handles opening, pickup,
+chorus, and theremin actions; its policy expansion slot remains zero.
 
-- **BAM M6**：按 Dynamixel XL330 的电压控制律、反电动势、库仑 / Stribeck / 负载相关摩擦建模。
-- **域随机化**：电池电压、负载压降、指令延迟、摩擦系数。
-- **回差变体**：每个关节串联 ±1° 齿轮间隙；观测读的是编码器侧（间隙之后），与真机一致。
+Published policy packages contain an ONNX file and `manifest.json`, describing
+dimensions, `model_api`, and robot compatibility. Official components, community
+Hub packages, and local paths populate the same runtime policy slots.
 
-任务按技能拆开（走、站、起坐、地面拾取、踢球、翻滚、轮滑等），但观测宽度统一，所以运行时可以热切换网络。社区可在 Mac / DGX Spark / Isaac Lab / Genesis 上复训，契约仍是同一套 61 / 14。
+Vision uses a separate model family: an INT8 `.rknn` detector, such as YOLO11n
+at 320×320, intended for the RK3566 NPU inside `mediad`. At the documented snapshot,
+the training repository was inaccessible and the complete camera-to-behavior
+integration was unfinished. Audio calls are synthesized from a deterministic
+SoC-serial-number seed rather than TTS.
 
-仿真网页沙盒（Hugging Face Space）用 MuJoCo WASM + onnxruntime-web，同样 50 Hz 跑真实策略，用来验图、不替代训练。
+### 1.3 Execution
 
-### 1.2 生成的模型是什么样的
+`robotd` loads ONNX Runtime dynamically and runs locomotion inference on the CPU.
+ORT is a board dependency rather than part of the runtime release archive.
 
-运动策略是 **ONNX**，不是 PyTorch 权重直接上机。导出脚本把观测归一化烘焙进图；手转 checkpoint 会让策略看到未归一化输入。
+| Workload | Owner | Execution |
+|---|---|---|
+| Locomotion ONNX | `robotd` | CPU / ONNX Runtime |
+| Duck detector RKNN | Intended for `mediad` | 0.8 TOPS NPU |
+| Microphone pet detection, approximately 20 KB CNN, 40-band log-mel | `robotd` worker | CPU |
 
-契约（加载时校验，形状不对则拒绝）：
+The control loop consumes small last-value feature snapshots at approximately
+10–30 Hz, not RGB frames. Blocking image work remains outside the balance loop.
 
+### 1.4 Processes and communication
 
-|     | 维数        | 内容                                                                                                         |
-| --- | --------- | ---------------------------------------------------------------------------------------------------------- |
-| 观测  | **61**    | `gyro(3)` + `projected_gravity(3)` + `joint_pos(14)` + `joint_vel(14)` + `last_action(14)` + `command(13)` |
-| 动作  | **14**    | 14 个关节目标；**嘴舵机不在策略里**                                                                                      |
-| 频率  | **50 Hz** | 与控制环同一拍                                                                                                    |
+Seven daemons and one CLI use **JSON-RPC 2.0 over Unix sockets**, serialized as
+NDJSON. `systemd` manages their lifecycle.
+
+![Onboard processes](diagrams/daemons.svg)
+
+| Process | Responsibility | Endpoint | External interface |
+|---|---|---|---|
+| `robotd` | Motors, body IMU, policies, safety, health | `/run/robotd.sock` | Servo bus |
+| `configd` | Wi-Fi, name, pairing PIN, gamepad pairing | `/run/configd.sock` | BlueZ / NetworkManager D-Bus |
+| `updaterd` | Signature checks, atomic update, rollback | `/run/updaterd.sock` | GitHub, systemctl, robot.health |
+| `btd` | Stateless BLE gateway | GATT | Forwards to robotd/configd/updaterd |
+| `padd` | Gamepad input to intent | `/run/padd/pad.sock` | robotd |
+| `mediad` | Camera, microphone, encoding, WebRTC, remote gateway | TCP 8080 / 8443 | Service forwarding and media |
+| `tofd` | Head ToF | `/run/tofd/tof.sock` | HAT I²C |
+| `robotctl` | CLI | — | All service sockets |
+
+1. **Only robotd writes motors.** Clients request intent; the safety layer decides what can execute.
+2. **configd, updaterd, and btd survive robotd failure**, preserving recovery access.
+3. **The control loop never performs synchronous RPC** to another service.
+4. Control messages use sockets; high-volume frame transfer, if needed, uses shared memory / dmabuf.
+
+The same API is exposed through a BLE subset, Unix sockets, WebSocket, and WebRTC
+data channels. The WebRTC `control` channel is reliable/ordered; `teleop` is
+unreliable/unordered so stale stick commands are not retransmitted. LLM clients
+request individual JPEGs rather than a continuous 30 fps stream.
+
+### 1.5 One control tick
+
+![Control tick](diagrams/control-tick.svg)
 
-
-`command(13)` = 速度指令 `vx, vy, vyaw`（3）+ 头目标 4 + 身体姿态 6。身体块里 x / y / yaw 在训练中未绑定，标称全零。
-
-嘴（第 15 个舵机）由上层逻辑开合（拾取、合唱口型、特雷门等），动作向量写回 15 槽时该位置保持 0。
-
-官方策略按槽位发布（走、站、起坐、左右踢、地面拾取、翻滚、轮滑等），Hub 仓库一份 `.onnx` + `manifest.json`（观测/动作维、`model_api`、机型兼容性）。板上三个来源填同一个槽：官方组件、社区 Hub、本地路径。
-
-视觉检测是另一类模型：`duck_detector` 训出的 **INT8** `.rknn`（例：YOLO11n 320×320），跑在 RK3566 NPU 上，**不**进 50 Hz 运动环。仓库对外 404，板上路径设计为挂在 `mediad` 里。
-
-音频不是神经网络：每台机器用 SoC 序列号生成确定性「性格」种子，合成一套叫声 bank（chirp / greet / coo 等），不是 TTS。
-
-### 1.3 模型在哪运行
-
-运动 ONNX 在板上由 `robotd` **用 ONNX Runtime** `dlopen` **推理**，每拍一次。ORT 是板级依赖，不打进发布包。
-
-感知在传感器旁边：
-
-
-| 模型 / 功能                              | 进程            | 加速器          |
-| ------------------------------------ | ------------- | ------------ |
-| 运动策略 `.onnx`                         | `robotd`      | CPU（ORT）     |
-| 鸭子检测 `.rknn`                         | 设计落在 `mediad` | NPU 0.8 TOPS |
-| 麦克风宠物检测（约 20 KB CNN，40-band log-mel） | `robotd` 工作线程 | CPU          |
-
-
-原则：**给控制环的是特征，不是帧。** `robotd` 不订阅 640×480 RGB；它读「球在 (x,y)」「附近有鸭子」这类几十字节、10–30 Hz 的快照。帧卡在 `mediad`，控制环卡不住。
-
-### 1.4 板载进程如何拼在一起
-
-七个守护进程 + 一个 CLI，Unix socket 上 **JSON-RPC 2.0（NDJSON，一行一个对象）**。`systemd` 管生命周期。
-
-![板载进程：同一套 API，多种传输](diagrams/daemons.svg)
-
-
-| 进程         | 拥有                     | 监听                    | 对外                                    |
-| ---------- | ---------------------- | --------------------- | ------------------------------------- |
-| `robotd`   | 电机、机身 IMU、策略、安全、健康     | `/run/robotd.sock`    | Dynamixel（或兼容）总线                      |
-| `configd`  | Wi-Fi、名字、配对 PIN、手柄绑定   | `/run/configd.sock`   | BlueZ / NetworkManager（D-Bus）         |
-| `updaterd` | 发布包验签、原子切换、回滚          | `/run/updaterd.sock`  | GitHub、`systemctl`、`robot.health`     |
-| `btd`      | 无状态，BLE 门面             | GATT                  | 转发给 `robotd` / `configd` / `updaterd` |
-| `padd`     | 无状态，手柄 → 意图            | `/run/padd/pad.sock`  | `robotd`                              |
-| `mediad`   | 摄像头、麦克风、编码、WebRTC、远端网关 | TCP `:8080` / `:8443` | 转发给上述服务                               |
-| `tofd`     | 头上 ToF                 | `/run/tofd/tof.sock`  | HAT 上的 I²C                            |
-| `robotctl` | CLI                    | —                     | 所有 socket                             |
-
-
-不变量：
-
-1. **只有** `robotd` **能写电机。** 客户端发意图（「这个速度走」「看那边」「坐下」），安全层决定是否执行。
-2. `configd` **/** `updaterd` **/** `btd` **在** `robotd` **死掉时仍可用** —— 这是恢复路径。
-3. **控制环不对其他服务做同步 RPC。** 跨进程读是 last-value-wins 缓存。
-4. **控制面走 socket；视频/音频帧不走 socket。** 真要跨进程传帧，才用 shm / dmabuf。
-
-远端同一套 API、多种传输：BLE（子集）、Unix socket、WebSocket（给 LLM：按需 JPEG，不要 30 fps）、WebRTC datachannel（遥操）。WebRTC 里 `control` 可靠有序，`teleop` 不可靠无序 —— 重传 80 ms 前的摇杆指令比丢掉更糟。
-
-### 1.5 一拍里发生什么（传感器 → 决策 → 电机）
-
-50 Hz，每拍两次总线事务，每秒一次慢采样：
-
-![50 Hz 控制环：一拍里的数据流](diagrams/control-tick.svg)
-
-每秒另读电压 / 温度（寄存器 144–146）。电压是 15 个舵机供电的平均（没有电量计）；温度按关节上报，取最热的那个名字。
-
-摔倒分两层：投影重力 mag 过阈值并 debounce，只用于报告；`limp_fall` 用陀螺预测即将着地，短暂接管关节、卸力、再交回站立策略。摔倒本身不禁止 `enable` / 技能 —— 躺着的时候更需要这些调用能用。
-
-### 1.6 各传感器如何进软件
-
-
-| 数据                   | 谁读                                       | 频率        | 进运动策略？                      |
-| -------------------- | ---------------------------------------- | --------- | --------------------------- |
-| 关节位置 / 速度 / PWM / 电流 | `robotd` 一次 `sync_read`                  | 50 Hz     | 是（14 关节）                    |
-| 机身 IMU：陀螺 + SFLP 四元数 | 同一趟 `sync_read`（总线 ID 200）               | 50 Hz     | 是（gyro + projected gravity） |
-| 电池电压、舵机温度            | `robotd` 慢采样                             | 1 Hz      | 否（电压自适应缩放可选）                |
-| 8×8 ToF              | `tofd` → socket 订阅                       | ~15 Hz    | 否；特雷门、避障、高层行为用              |
-| 摄像头                  | `mediad`（ISP + MPP H.264）                | 默认 720p30 | 否；检测结果作特征                   |
-| 麦克风                  | codec → ALSA；`mediad` 推流，`pet-detect` 另读 | 音频速率      | 否                           |
-| 头部 IMU               | 产品规格有；当前运行时控制环不用                         | —         | 否                           |
-| SoC 温度               | `robotd` 读 sysfs                         | 1 Hz      | 否                           |
-
-
-里程计在环内算：足端接触 + IMU 航向。没有磁力计，航向会漂，调用方按相对运动用。
-
-### 1.7 扬声器如何发声
-
-声音不经策略网络。
-
-1. 安装时 `sounds ensure-bank` 用 SoC 序列号生成种子，渲染该机独有的叫声 bank。
-2. `robotd` 里 `sound.rs` 拉起一个 `aplay` 子进程；codec 的 PCM 独占，新叫声杀掉旧的。
-3. 播放走 ALSA 设备（开发路径上是 `plughw:aic3104`）。喇叭挂在 codec 的 line-out（LEFT_LOP / RIGHT_LOP）。
-4. 合唱：多机 BLE 信标选最低 ID 当指挥；`btd` 只搬信标，不决策。合唱会动嘴和头，所以默认关闭。
-5. 特雷门：`tofd` 的深度 → 音高 + 嘴开度，50 Hz 环只采样、不等待。
-
-WebRTC 会话可以双向带麦克风和喇叭，用于遥在；本地叫声和远端音频抢同一条 PCM。
-
----
-
-
-
-## 2. 硬件模块架构
-
-两边都是：RK3566 同级 Linux 板 + 扩展板（电源 / 音频 / I²C）+ 一条半双工舵机总线 + 头上的相机 / ToF。差别在执行器品牌、电池、哪些 PCB 开源。
-
-### 2.1 我们规划的架构（OpenMicroDuck）
-
-目标：几何与控制契约对齐 Microduck（25 cm、15 DoF、50 Hz、61/14），供应链换成可公开打样、可替代的国产件。机械图纸、PCB、BOM 按 CERN-OHL-S 发布。
-
-规格（规划，未冻结）：
-
-
-| 项目  | 规划                                      |
-| --- | --------------------------------------- |
-| 整机  | 25 cm / ≤1 kg                           |
-| 自由度 | 15（腿 5×2 + 头颈 4 + 鸭嘴 1）                 |
-| 舵机  | 15 × **Feetech 协议平替**（TTL 半双工、带位置/速度反馈） |
-| 主控  | **RK3566 同级**（不绑定某一款模块，兼容性矩阵另发）         |
-| 电池  | **可拆 18650 电池组** 2S 7.4V, 3S 12V                    |
-| 结构  | 3D 打印（FDM / 光固化）+ 钣金                    |
-| 控制  | 50 Hz 板载策略环；训练仍用 MuJoCo / PPO           |
-
-
-![OpenMicroDuck 硬件模块（规划）](diagrams/hw-openmicroduck.svg)
-
-#### 模块与接口（规划）
-
-
-| 模块     | 型号规格               | 物理接口                         | 协议                                                        | 备注                                          |
-| ------ | ------------------ | ---------------------------- | --------------------------------------------------------- | ------------------------------------------- |
-| 计算主控   | RK3566 同级 SBC      | 40-pin、CSI、UART、USB-C        | Linux 外设                                                  | 不绑定 Radxa；要能跑 50 Hz ORT + 可选推流              |
-| 舵机 ×15 | HD-1910M          | 3 线：GND / 电源 / DATA          | 厂家 TTL 总线（与 Dynamixel 类似的半双工包）                            | 换执行器必须 **重训** 策略；官方 ONNX 不能当 bit-exact 用    |
-| 机身 IMU | `imu_to_servo` 自制板 | 挂在舵机总线上                      | 规划对齐官方从机：ID 200、1 Mbps、寄存器 124 起 12 字节（陀螺 i16 + 四元数 fp16） | MCU + LSM6DSV16X（SFLP）+ 半双工 PHY；控制环不在主机上做融合 |
-| 头部 IMU | 小 I²C 模组           | 4 针：GND / 3V3 / SDA / SCL    | I²C ≤400 kHz                                              | **不进平衡环**；与 ToF 共总线，注意地址                    |
-| 摄像头  | IMX219 + 160度广角镜头       | MIPI CSI（控制常走 I²C `0x10` 一类） | CSI-2 + I²C                                               | 具体传感器未钉死；软件侧按「感知在 `mediad`」接                |
-| DToF   | 8×8 多区 ToF         | Qwiic / Stemma 类 3.3 V I²C   | I²C，常见地址 `0x29`                                           | VL53L5CX / L8CX 一类；`tofd` 发布矩阵              |
-| 麦克风    | MEMS，咪头   | I²S 数据 + I²C 控制              | ALSA                                                      | 可与官方 HAT 路线兼容，或换国产 codec                    |
-| 扬声器    | 3525                | codec line-out / 功放          | I²S → 模拟                                                  | `aplay` 播预渲染 bank                           |
-| 电源     | 18650 或 21700 电池组          | HAT 作配电                      | —                                                         | 与官方 NP-F550 不同；需自管充电、过放、舵机供电轨               |
-
-
-舵机 ID 规划与官方运行时对齐，便于沿用观测布局（嘴仍是策略外的第 15 轴）：
-
-```text
-右腿          10 right_hip_yaw · 11 right_hip_roll · 12 right_hip_pitch · 13 right_knee · 14 right_ankle
-左腿          20 left_hip_yaw  · 21 left_hip_roll  · 22 left_hip_pitch  · 23 left_knee  · 24 left_ankle
-颈 / 头 / 嘴  30 neck_pitch    · 31 head_pitch     · 32 head_yaw        · 33 head_roll  · 34 mouth
-机身 IMU      200
-```
-
-##### 桌面调试阶段
-桌面调试阶段的硬件连接关系图
-![桌面调试版硬件连接关系](assets/desktop_stage_diagram.png)
-
-IMU与主控的连接图
-![IMU与Radxa Zero 3W接线图](assets/wires_LQ-LSM6DS-RadxaZero3W.png)
-
-##### 整机集成阶段
-整机集成阶段的硬件连接关系图
-![整机集成版舵机之间的连接关系](assets/servos_connection.png)
-
-HAT 需要至少三件事：舵机半双工方向电路、电池配电、I²C/I²S 外设。官方 `[elec_RPI_Robot_HAT](https://github.com/pollen-robotics/elec_RPI_Robot_HAT)` 已开源且标明可驱动 Dynamixel **或 Feetech**（线序可能要改），可作第一版参考，再按 18650 与国产件重画。
-
-与官方栈的关系：主控同级、总线从机行为对齐时，可直接跑 Apache-2.0 的 `robotd` 一族。Feetech 寄存器 / 波特率 / 力矩曲线不同，则要在 `RobotIo` 下加驱动，并用 `microduck_rl` 按新 BAM（或实测执行器）重训。
-
----
-
-
-
-### 2.2 推测的 Microduck 架构
-
-产品规格只到「RK3566、15 电机、相机、LiDAR、双 IMU」。下面到芯片 / 连接器这一层，来自 **公开运行时、设备树、HAT 开源仓** 的还原，**不是** Pollen 发布的量产 BOM。量产前仍可能改。尚未有可核对的零售机拆解。
-
-整机（官方）：高 25 cm、宽 14 cm、<800 g；15 DoF；50 Hz 策略环；电池 NP-F550 2600 mAh；Wi-Fi + 蓝牙；NFC 双天线（头 + 喙，控制器未公开）。
-
-![Microduck 硬件模块（源码还原，非官方 BOM）](diagrams/hw-microduck.svg)
-
-#### 模块、接口、协议
-
-
-| 模块          | 推测 / 还原型号                                                  | 接口                                      | 协议                                         | 证据                                                          |
-| ----------- | ---------------------------------------------------------- | --------------------------------------- | ------------------------------------------ | ----------------------------------------------------------- |
-| 计算主控        | RK3566，四核 A55 + Mali-G52 + NPU 0.8 TOPS，专门定义主控PCBA | CSI、40-pin、UART2、板载 Wi-Fi/BT            | Linux                                      | 设备树 `compatible = "radxa,zero-3w"`；产品规格 SoC / 1G+32G       |
-| 舵机 ×15      | **ROBOTIS Dynamixel XL330**（社区多指向 M288-T 一类）               | 3 线 TTL：GND / VDD / DATA                | **Protocol 2.0，1 Mbps**                    | `robotd` 总线文档；`rustypot` 寄存器表                               |
-| 半双工 PHY     | 在 HAT 上                                                    | UART TX/RX → 单线 DATA                    | 硬件自动换向（源码无方向 GPIO）                         | HAT README：TTL 与 485 都做了                                    |
-| 机身 IMU      | **ST LSM6DSV16X** 在自制 `imu_to_dxl` v2                      | 与舵机同一 UART                              | DXL 从机 **ID 200**；`sync_read` 地址 124、12 字节 | `duck-control` IMU 代码。板子原理图 **未开源**                         |
-| HAT 上第二 IMU | **Bosch BMI088**                                           | I²C `0x19` / `0x68`                     | I²C                                        | 焊着，源码写 unused / dormant                                     |
-| 头部 IMU      | 产品规格「头 + 身体各一」                                             | 未公开                                     | 未进入当前 `robotd` 控制环                         | 官方规格 vs 源码「One IMU, one code path」—— **未对齐**                |
-| 图像传感器       | **Sony IMX219**（Pi Camera v2 路径）                           | MIPI CSI + I²C `0x10`                   | CSI-2；1080p30 传感器模式，ISP 缩到 720p30          | `mediad` / 设备树。量产镜头 **未冻结**（新闻稿）                            |
-| DToF        | **VL53L5CX 或 VL53L8CX**（8×8）                               | HAT Stemma J5，I²C `0x29`                | I²C，上电要灌约 90 KB 固件                         | `tofd`；两代芯片源码都支持，量产哪颗 **未钉**                                |
-| 音频 codec    | **TI TLV320AIC3104**                                       | I²C `0x18` 控制 + **I²S3** 数据；MCLK 12 MHz | I²C + I²S，ALSA 卡名 `aic3104`                | 设备树 overlay                                                 |
-| 麦克风         | HAT 板载 MEMS，走 Mic3R                                        | 模拟 → codec PGA                          | —                                          | 具体料号未公开                                                     |
-| 扬声器         | 接 codec LOP                                                | 模拟                                      | —                                          | 料号未公开                                                       |
-| NFC         | 双天线：头 + 喙                                                  | 未公开                                     | 未公开                                        | 仅产品规格；运行时源码无提及                                              |
-| 电池          | **Sony NP-F550**，2S，标称 7.2 V                               | 经 HAT 配电                                | 无电量计；电压 = 舵机回报的总线电压                        | 官方规格 + 运行时注释。零售 XL330 额定 3.7–6.0 V，与 2S 直供 **如何匹配尚未被量产机证实** |
-
-
-舵机 ID（官方控制环）：
-
-```text
-imu_to_dxl    200
-右腿          10 right_hip_yaw · 11 right_hip_roll · 12 right_hip_pitch · 13 right_knee · 14 right_ankle
-左腿          20 left_hip_yaw  · 21 left_hip_roll  · 22 left_hip_pitch  · 23 left_knee  · 24 left_ankle
-颈 / 头 / 嘴  30 neck_pitch    · 31 head_pitch     · 32 head_yaw        · 33 head_roll  · 34 mouth
-```
-
-`imu_to_dxl` 12 字节块（与 15 个舵机同一趟读，主机不做融合）：
-
-
-| 偏移   | 内容                                                      |
-| ---- | ------------------------------------------------------- |
-| 0–5  | 陀螺 x/y/z，`i16` LE，±500 dps                              |
-| 6–11 | SFLP 四元数 x/y/z，IEEE binary16；`w` 在主机用 `√(1−x²−y²−z²)` 补 |
-
-
-HAT 上 I²C3 占用 40-pin 的 3/5。Radxa 原厂把同一控制器的 M1 给了 USB-C PD（FUSB302）；官方 overlay 改到 M0 后 **失去 PD 协商**，普通 5 V 充电仍可用。Armbian 默认在 UART2 开 `serial-getty`，不 mask 就会把整条舵机总线占死。
-
-#### 和「双 IMU」的关系
-
-新闻稿写身体、头部各一颗 IMU。源码控制环只认总线上的 LSM6DSV16X。HAT 的 BMI088 明确休眠。头部那颗更像交互 / 头姿辅助，或量产与开发板不一致。复刻平衡环时，**不要**把第二颗 IMU 当成 50 Hz 观测的一部分。
-
-#### 开源边界（官方立场）
-
-
-| 开源                                      | 未作为开源硬件发布         |
-| --------------------------------------- | ----------------- |
-| 板载软件（Apache-2.0）                        | 可编辑机械 CAD、整机装配文档  |
-| `microduck_rl` 与 ONNX 策略                | `imu_to_dxl` 原理图  |
-| 仿真 MJCF + 训练用 STL                       | 量产 BOM、线束图        |
-| **RPI Robot HAT**（KiCad / Gerber / BOM） | NFC 控制器；部分传感器量产料号 |
-
-
----
-
-
-
-## 3. 对照摘要
-
-
-|          | OpenMicroDuck（规划）                      | Microduck（公开材料 + 源码还原）         |
-| -------- | -------------------------------------- | ------------------------------ |
-| 软件       | 同一套：PPO 离线训 → ONNX → 板上 50 Hz `robotd` | 同左（官方实现）                       |
-| 主控       | RK3566 **同级**，不绑模块                     | 产品：RK3566；开发板还原为 Radxa Zero 3W |
-| 舵机       | Feetech 平替                             | Dynamixel XL330                |
-| 机身 IMU   | 自制 `imu_to_servo`，行为对齐 ID 200          | 同结构，原理图未开源                     |
-| 头部 IMU   | I²C 辅助模组，不进控制环                         | 规格有；运行时未用                      |
-| ToF / 相机 | 同角色（I²C 8×8 + CSI）                     | VL53L5/8CX + IMX219 路径         |
-| 电池       | 18650 或 21700 电池组                              | NP-F550                        |
-| 硬件开源     | 图纸 / PCB / BOM 全公开                     | 仅 HAT + 软件；整机不称开源硬件            |
-
-
-换舵机或改质量分布之后，官方 9 个 ONNX 不能当即插即用步态；要在 `microduck_rl` 里按新执行器重训，并保持 `obs[61] → act[14]`，才能继续热切换技能。
-
----
-
-
-
-## 4. 主要来源
-
-- 官方运行时架构：[https://github.com/pollen-robotics/microduck/blob/main/docs/design/architecture.md](https://github.com/pollen-robotics/microduck/blob/main/docs/design/architecture.md)
-- 控制环与总线：[https://github.com/pollen-robotics/microduck/blob/main/docs/design/robotd-design.md](https://github.com/pollen-robotics/microduck/blob/main/docs/design/robotd-design.md)
-- 策略通道：[https://github.com/pollen-robotics/microduck/blob/main/docs/design/policy-channel-design.md](https://github.com/pollen-robotics/microduck/blob/main/docs/design/policy-channel-design.md)
-- 训练：[https://github.com/pollen-robotics/microduck_rl](https://github.com/pollen-robotics/microduck_rl)
-- HAT：[https://github.com/pollen-robotics/elec_RPI_Robot_HAT](https://github.com/pollen-robotics/elec_RPI_Robot_HAT)
-- 产品规格：[https://pollen-robotics.com/microduck/press-kit/](https://pollen-robotics.com/microduck/press-kit/)
-- 条目索引：`[reference.md](reference.md)`
+At 50 Hz, one bus read gathers servo and IMU state; observation construction and
+skill arbitration select the policy; inference produces 14 actions; home offsets,
+scaling, filtering, and safety produce 15 servo targets for the bus write.
+
+The upstream Dynamixel layout reads registers 124–136 for fast feedback and
+144–146 for voltage/temperature at 1 Hz. Feetech drivers must map their own registers.
+
+Supply voltage is averaged across the 15 servo reports; there is no fuel gauge.
+Temperature is reported per joint, including the hottest joint's name.
+
+Fall reporting uses projected gravity and debounce. Separately, `limp_fall`
+predicts impact from gyro data, temporarily takes over the joints, releases effort,
+and hands back to standing. A fall does not itself prohibit enable/skill calls.
+
+### 1.6 Sensors
+
+| Data | Reader | Rate | In the locomotion observation? |
+|---|---|---|---|
+| Servo position / velocity / PWM / current | robotd sync_read | 50 Hz | Position and velocity of 14 joints; other feedback supports diagnostics/control |
+| Body gyro + SFLP quaternion | Same bus read, ID 200 | 50 Hz | Gyro and projected gravity |
+| Servo voltage / temperature | robotd slow read | 1 Hz | No; optional voltage adaptation is separate |
+| 8×8 ToF | tofd socket | About 15 Hz | No; theremin, avoidance, and behavior |
+| Camera | mediad, ISP + MPP H.264 | Default 720p30 | No; detection features only |
+| Microphone | Codec / ALSA; mediad and pet-detect | Audio rate | No |
+| Head IMU | Mentioned in product specification | Unspecified | Not used by the current balance loop |
+| SoC temperature | robotd / sysfs | 1 Hz | No |
+
+Odometry combines foot contacts with IMU heading. There is no magnetometer;
+heading drifts and should be treated as relative motion.
+
+### 1.7 Sound
+
+1. `sounds ensure-bank` builds a per-robot call bank using a SoC-derived seed.
+2. `sound.rs` launches `aplay`; a new sound replaces the previous playback.
+3. ALSA uses `plughw:aic3104` on the documented development setup. Speakers use codec LEFT_LOP / RIGHT_LOP.
+4. Chorus elects the lowest BLE beacon ID as conductor. `btd` transports beacons; motion decisions stay elsewhere. Chorus is off by default because it moves the mouth and head.
+5. Theremin behavior maps ToF depth to pitch and mouth opening without blocking the 50 Hz loop.
+
+WebRTC can carry bidirectional audio. Remote audio and local calls compete for
+the same PCM device.
+
+## 2. Hardware
+
+Both designs use an RK3566-class Linux computer, a power/audio/I²C expansion
+board, one half-duplex servo bus, and head-mounted camera/ToF peripherals.
+
+### 2.1 OpenMicroDuck plan
+
+| Item | Planned design |
+|---|---|
+| Envelope | 25 cm; up to 1 kg |
+| Degrees of freedom | 15: two 5-axis legs, four head/neck axes, one mouth |
+| Servos | 15 Feetech-compatible TTL bus actuators with feedback; current build HD-1910-C001 |
+| Compute | RK3566 class; current documented board Radxa ZERO 3W |
+| Power | Removable 18650/21700 pack; current HD-1910 build uses 2S 7.4 V nominal |
+| Structure | Printed parts; early planning also considered sheet metal |
+| Control | 50 Hz onboard, offboard MuJoCo/PPO training |
+
+Early plans mention 3S / 12 V variants. **Those are not a direct supply option for
+the 4–8.4 V HD-1910.** Match the servo rail to the actual actuator.
+
+![Planned hardware](diagrams/hw-openmicroduck.svg)
+
+| Module | Interface | Notes |
+|---|---|---|
+| SBC | Header, CSI, UART, USB-C | Must sustain 50 Hz ORT plus bus and safety work |
+| HD-1910 servos | Three-wire TTL | Vendor protocol and pin order; see [servo guide](servo.md) |
+| Body `imu_to_servo` | Servo bus, planned ID 200 at 1 Mbps | MCU + LSM6DSV16X SFLP + half-duplex PHY; emulate the required IMU register block |
+| Head IMU | 3.3 V I²C, up to 400 kHz | Outside the balance loop; check shared addresses |
+| Camera | MIPI CSI-2 + control I²C | IMX219 / 160° lens in planning; final module not fixed |
+| 8×8 DToF | 3.3 V Qwiic/Stemma I²C, commonly 0x29 | VL53L5CX/L8CX family; tofd publishes the matrix |
+| Microphone | Codec input; I²C control / I²S data | Exact part depends on HAT revision |
+| Speaker | Codec line-out / amplifier | 3525 in the root BOM |
+| Battery | HAT power distribution | Charging, undervoltage protection, and servo rail need explicit design |
+
+Joint IDs are listed in [docs/README.md](README.md#joint-ids).
+
+![Bench connections](assets/desktop_stage_diagram.png)
+![IMU and Radxa wiring](../assets/wires_LQ-LSM6DS-RadxaZero3W.png)
+![Integrated servo connections](assets/servos_connection.png)
+
+The HAT needs half-duplex direction control, battery distribution, and I²C/I²S.
+[Pollen's RPI Robot HAT](https://github.com/pollen-robotics/elec_RPI_Robot_HAT)
+supports Dynamixel or Feetech electrically, subject to cable pin order.
+This does not imply wire-protocol compatibility.
+
+When registers, baud rates, or actuator dynamics differ, adapt the `RobotIo`
+driver and validate/retrain using the correct BAM or measured actuator model.
+
+### 2.2 Microduck reconstructed from public source
+
+The product description cited by upstream gives 25 cm height, 14 cm width,
+under 800 g, 15 DoF, 50 Hz, NP-F550 2600 mAh, Wi-Fi/Bluetooth, and two NFC antennas
+(head and beak). Detailed component identification below is **source-derived**,
+not a confirmed retail teardown.
+
+![Source-derived Microduck hardware](diagrams/hw-microduck.svg)
+
+| Module | Source-derived identification | Interface / qualification |
+|---|---|---|
+| Compute | RK3566, Cortex-A55, Mali-G52, 0.8 TOPS NPU | Device tree targets `radxa,zero-3w`; product specification 1 GB / 32 GB |
+| Servos | Dynamixel XL330, M288-T used as the comparison baseline | Protocol 2.0, 1 Mbps, TTL |
+| Bus PHY | On HAT | UART TX/RX to single wire; automatic direction switching, no runtime direction GPIO |
+| Body IMU | LSM6DSV16X on `imu_to_dxl` v2 | ID 200, 12-byte read at address 124; schematic unavailable in the documented snapshot |
+| HAT IMU | BMI088 | I²C 0x19 / 0x68; marked dormant/unused |
+| Head IMU | Product specification only | No current balance-loop use; exact implementation unresolved |
+| Camera | IMX219 / Pi Camera v2 path | CSI + I²C 0x10; 1080p30 sensor, ISP scales to 720p30; final lens unresolved |
+| DToF | VL53L5CX or VL53L8CX | HAT Stemma J5, 0x29; about 90 KB firmware upload on startup |
+| Audio codec | TLV320AIC3104 | I²C 0x18 + I²S3, 12 MHz MCLK; ALSA `aic3104` |
+| Microphone | HAT MEMS via Mic3R | Exact part unspecified |
+| Speaker | Codec LOP | Exact part unspecified |
+| NFC | Head and beak antennas | Controller/interface unspecified |
+| Battery | NP-F550, 2S, nominal 7.2 V | Voltage inferred from servo bus; how this is reconciled with retail XL330's 6 V maximum was unresolved |
+
+The IMU block contains gyro x/y/z as little-endian i16 in bytes 0–5 (±500 dps),
+then SFLP quaternion x/y/z as binary16 in bytes 6–11.
+The host reconstructs `w = sqrt(1 - x² - y² - z²)`; it does not run sensor fusion.
+
+I²C3 M0 uses header pins 3/5. Switching from the vendor's M1 assignment for
+FUSB302 USB-C PD removes PD negotiation; ordinary 5 V input remains available.
+Armbian's UART2 serial-getty must not occupy the servo bus.
+
+The advertised two IMUs do not imply two IMUs in the policy observation.
+The active balance path uses the bus-mounted LSM6DSV16X; the HAT BMI088 is dormant.
+
+### 2.3 Public hardware boundary
+
+| Published in the documented upstream snapshot | Not published as complete open hardware |
+|---|---|
+| Apache-2.0 runtime and training software | Editable production mechanical CAD and complete assembly guide |
+| ONNX policies, simulation MJCF and STL | imu_to_dxl schematic |
+| RPI Robot HAT KiCad, Gerber, BOM | Production BOM, harness drawings, NFC controller, some final sensor part numbers |
+
+Simulation meshes retain their own noncommercial ShareAlike license.
+
+## 3. Comparison
+
+| Area | OpenMicroDuck | Microduck reference |
+|---|---|---|
+| Software contract | PPO → ONNX → 50 Hz robotd | Same architecture |
+| Compute | RK3566-class, currently ZERO 3W | RK3566; source targets ZERO 3W |
+| Actuators | Feetech HD-1910 | Dynamixel XL330 |
+| Body IMU | imu_to_servo, ID 200 behavior | imu_to_dxl |
+| Head IMU | Auxiliary I²C, outside balance loop | Specified but not used by current loop |
+| Camera / ToF | CSI + I²C 8×8 | IMX219 + VL53L5/8CX source paths |
+| Battery | 18650/21700 pack | NP-F550 |
+
+Changes to actuators or mass distribution require policy validation and often
+retraining. Keep the **61 → 14** contract when adding skills.
+
+## 4. Sources
+
+- [Runtime architecture](https://github.com/pollen-robotics/microduck/blob/main/docs/design/architecture.md)
+- [Control loop and bus](https://github.com/pollen-robotics/microduck/blob/main/docs/design/robotd-design.md)
+- [Policy channel](https://github.com/pollen-robotics/microduck/blob/main/docs/design/policy-channel-design.md)
+- [Training](https://github.com/pollen-robotics/microduck_rl)
+- [HAT](https://github.com/pollen-robotics/elec_RPI_Robot_HAT)
+- [Product specification](https://pollen-robotics.com/microduck/press-kit/)
+- [Reference index](reference.md)
 

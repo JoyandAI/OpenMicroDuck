@@ -22,7 +22,7 @@ stop_one() {
   if ! server_pid "$pid"; then
     return 1
   fi
-  echo "停止 Motion Lab：PID $pid"
+  echo "Stopping Motion Lab: PID $pid"
   kill -TERM "$pid" 2>/dev/null || true
   while [ "$i" -lt 20 ]; do
     if ! kill -0 "$pid" 2>/dev/null; then
@@ -31,7 +31,7 @@ stop_one() {
     sleep 0.25
     i=$((i + 1))
   done
-  echo "PID $pid 未在 5 秒内退出，强制结束" >&2
+  echo "PID $pid did not exit within 5 seconds; forcing termination" >&2
   kill -KILL "$pid" 2>/dev/null || true
   sleep 0.3
   if kill -0 "$pid" 2>/dev/null; then
@@ -44,13 +44,13 @@ found=0
 if [ -f "$PID_FILE" ]; then
   pid="$(tr -d '[:space:]' < "$PID_FILE" 2>/dev/null || true)"
   case "$pid" in
-    ''|*[!0-9]*) echo "PID 文件无效，已删除：$PID_FILE" >&2; rm -f "$PID_FILE" ;;
+    ''|*[!0-9]*) echo "Invalid PID file removed: $PID_FILE" >&2; rm -f "$PID_FILE" ;;
     *)
       if server_pid "$pid"; then
-        stop_one "$pid" || { echo "无法停止 PID $pid" >&2; exit 1; }
+        stop_one "$pid" || { echo "Could not stop PID $pid" >&2; exit 1; }
         found=1
       else
-        echo "PID 文件已过期，已删除：$PID_FILE"
+        echo "Stale PID file removed: $PID_FILE"
         rm -f "$PID_FILE"
       fi
       ;;
@@ -62,11 +62,11 @@ if [ "$found" -eq 0 ] && command -v lsof >/dev/null 2>&1; then
     cmd="$(ps -p "$pid" -o command= 2>/dev/null || true)"
     case "$cmd" in
       *server.py*)
-        stop_one "$pid" || { echo "无法停止 PID $pid" >&2; exit 1; }
+        stop_one "$pid" || { echo "Could not stop PID $pid" >&2; exit 1; }
         found=1
         ;;
       *)
-        echo "端口 $PORT 被非 Motion Lab 进程占用，未处理：PID $pid" >&2
+        echo "Port $PORT is occupied by a non-Motion Lab process; leaving PID $pid alone" >&2
         ;;
     esac
   done
@@ -75,13 +75,13 @@ fi
 rm -f "$PID_FILE"
 
 if command -v lsof >/dev/null 2>&1 && lsof -nP -iTCP:"$PORT" -sTCP:LISTEN >/dev/null 2>&1; then
-  echo "端口 $PORT 仍有监听，未继续处理：" >&2
+  echo "Port $PORT still has a listener; leaving it alone:" >&2
   lsof -nP -iTCP:"$PORT" -sTCP:LISTEN >&2 || true
   exit 1
 fi
 
 if [ "$found" -eq 1 ]; then
-  echo "Motion Lab 已停止，端口 $PORT 已释放。"
+  echo "Motion Lab stopped; port $PORT is free."
 else
-  echo "Motion Lab 当前没有运行，端口 $PORT 空闲。"
+  echo "Motion Lab is not running; port $PORT is free."
 fi

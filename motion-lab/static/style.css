@@ -18,8 +18,8 @@
   --stage-2: #162a36;
   --shadow: 0 22px 55px rgba(45, 37, 28, 0.12);
   --radius: 22px;
-  --sans: "Avenir Next", "PingFang SC", "Hiragino Sans GB", "Noto Sans SC", "Microsoft YaHei", sans-serif;
-  --serif: "Iowan Old Style", "Songti SC", "Noto Serif SC", Georgia, serif;
+  --sans: "Avenir Next", "Segoe UI", Arial, sans-serif;
+  --serif: "Iowan Old Style", Georgia, serif;
   --mono: "SFMono-Regular", "Cascadia Mono", "Roboto Mono", Menlo, monospace;
 }
 
@@ -999,7 +999,7 @@ kbd { border: 1px solid var(--line); border-radius: 3px; padding: 0 3px; font-fa
 .console:not(.expanded) .knob-check:not(.knob-active) { display: none; }
 .console:not(.expanded) .knob-deck:empty::after,
 .console.no-knobs:not(.expanded) .knob-deck::after {
-  content: "这个动作没有需要微调的参数，直接看回放即可。";
+  content: "This motion has no tuning controls. Watch the playback.";
   color: var(--muted); font-size: 10px; line-height: 1.5;
 }
 

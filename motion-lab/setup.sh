@@ -5,14 +5,14 @@ cd "$(dirname "$0")"
 PYTHON="${PYTHON:-python3}"
 
 if ! command -v "$PYTHON" >/dev/null 2>&1; then
-  echo "未找到 $PYTHON。请先安装 Python 3.9+。" >&2
+  echo "Could not find $PYTHON. Install Python 3.9+ first." >&2
   exit 1
 fi
 
 "$PYTHON" - <<'PY'
 import sys
 if sys.version_info < (3, 9):
-    raise SystemExit("需要 Python 3.9 或更新版本；当前为 %s" % sys.version.split()[0])
+    raise SystemExit("Python 3.9 or newer is required; found %s" % sys.version.split()[0])
 print("Python", sys.version.split()[0], "at", sys.executable)
 PY
 
@@ -24,5 +24,5 @@ fi
 .venv/bin/python -m pip install -r requirements.txt
 
 echo
-echo "依赖已安装到 $(pwd)/.venv"
-echo "启动：./run.sh"
+echo "Dependencies installed in $(pwd)/.venv"
+echo "Start with: ./run.sh"

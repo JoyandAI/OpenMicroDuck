@@ -4,6 +4,7 @@
 import sys
 import unittest
 from pathlib import Path
+from unittest.mock import Mock
 
 import mujoco
 import numpy as np
@@ -156,6 +157,64 @@ class MotionLabTest(unittest.TestCase):
         lab.set_mode("sitstand", sit=False)
         self.run_for(3.0)
         self.assertGreater(float(lab.data.qpos[2]), 0.10, "stand up")
+
+
+class EnglishCommandsTest(unittest.TestCase):
+    """Check text commands without constructing a physics simulation."""
+
+    def setUp(self):
+        self.lab = server.MotionLab.__new__(server.MotionLab)
+        self.lab.reset = Mock()
+        self.lab.set_mode = Mock()
+        self.lab.set_twist = Mock()
+        self.lab.set_head = Mock()
+        self.lab.walk_default_vx = 0.16
+
+    def test_documented_actions(self):
+        commands = {
+            "stand up": "stand_up", "walk forward": "walk", "stop": "stop",
+            "sit down": "sit", "pick up": "ground_pick", "right kick": "kick_right",
+            "forward roll": "roulade", "look left": "head_left",
+            "look right": "head_right", "center head": "head_center", "reset": "reset",
+        }
+        for text, action in commands.items():
+            with self.subTest(text=text):
+                self.assertEqual(self.lab.chat(text)["action"], action)
+
+    def test_case_whitespace_and_punctuation(self):
+        self.assertEqual(self.lab.chat("  WALK   FORWARD!  ")["action"], "walk")
+        self.lab.set_twist.assert_called_once_with(vx=0.16, vy=0.0, wz=0.0)
+
+    def test_look_forward_does_not_walk(self):
+        self.assertEqual(self.lab.chat("look forward")["action"], "head_center")
+        self.lab.set_head.assert_called_once_with(yaw=0.0, pitch=0.0)
+        self.lab.set_mode.assert_not_called()
+        self.lab.set_twist.assert_not_called()
+
+    def test_stop_clears_velocity(self):
+        self.lab.chat("stop")
+        self.lab.set_mode.assert_called_once_with("stand")
+        self.lab.set_twist.assert_called_once_with(vx=0.0, vy=0.0, wz=0.0)
+
+    def test_sit_and_stand_flags(self):
+        self.lab.chat("sit down")
+        self.lab.set_mode.assert_called_with("sitstand", sit=True)
+        self.lab.chat("stand up")
+        self.lab.set_mode.assert_called_with("sitstand", sit=False)
+
+    def test_reset(self):
+        self.assertEqual(self.lab.chat("reset")["action"], "reset")
+        self.lab.reset.assert_called_once_with()
+
+    def test_noncommands_do_not_move_the_robot(self):
+        for text in (None, "", "position", "controller", "understand", "help",
+                     "who are you", "where is the ball"):
+            with self.subTest(text=text):
+                self.assertIsNone(self.lab.chat(text)["action"])
+        self.lab.reset.assert_not_called()
+        self.lab.set_mode.assert_not_called()
+        self.lab.set_twist.assert_not_called()
+        self.lab.set_head.assert_not_called()
 
 
 if __name__ == "__main__":

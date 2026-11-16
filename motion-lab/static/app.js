@@ -53,7 +53,7 @@
     box.className = `message ${role}`;
     const label = document.createElement("span");
     label.className = "msg-label";
-    label.textContent = role === "user" ? "你" : "小鸭";
+    label.textContent = role === "user" ? "You" : "Duck";
     const p = document.createElement("p");
     p.textContent = text;
     box.append(label, p);
@@ -203,7 +203,7 @@
     const label = s.mode_label || s.mode;
     $("server-url").textContent = location.host || "127.0.0.1:18765";
 
-    $("connection").textContent = "本地已连接";
+    $("connection").textContent = "Connected locally";
     $("connection").classList.remove("offline");
     $("pulse").style.background = "";
     $("height").textContent = fmt(s.height_mm, 1);
@@ -212,21 +212,21 @@
     $("speed").textContent = fmt(s.cmd?.vx, 2);
     recordPosition(s);
     $("auto-reset").textContent = `AUTO RESET ${s.auto_reset_count || 0}`;
-    $("run-status").textContent = s.paused ? "已暂停" : label;
-    $("caption-mode").textContent = s.paused ? "已暂停" : label;
-    $("caption-event").textContent = s.event || "拖动画面旋转，滚轮缩放";
+    $("run-status").textContent = s.paused ? "Paused" : label;
+    $("caption-mode").textContent = s.paused ? "Paused" : label;
+    $("caption-event").textContent = s.event || "Drag to rotate; scroll to zoom";
     $("mode-pill").textContent = label;
     $("sim-time").textContent = fmtTime(s.time);
     $("timeline-fill").style.width = `${Math.min(100, ((s.mode_time || 0) % 5) * 20)}%`;
 
     const paused = Boolean(s.paused);
     $("pause-icon").textContent = paused ? "▶" : "Ⅱ";
-    $("pause-button").setAttribute("aria-label", paused ? "继续播放" : "暂停");
+    $("pause-button").setAttribute("aria-label", paused ? "Resume" : "Pause");
 
     const standup = Boolean(s.standup);
     // The right-panel sitstand preset shows the sit/stand toggle label; the
     // duplicate console sit/stand buttons were removed.
-    $("sitstand-label").textContent = standup ? "站起中…" : (s.sit ? "站起" : "坐下");
+    $("sitstand-label").textContent = standup ? "Standing up…" : (s.sit ? "Stand up" : "Sit down");
     $("head-value").textContent = `${fmt(s.head_yaw, 2)} rad`;
     $("speed-value").textContent = `${fmt(s.cmd?.vx, 2)} m/s`;
     if (document.activeElement !== $("speed-slider")) {
@@ -237,7 +237,7 @@
     $("fps").textContent = `${fmt(s.render_fps, 0)} FPS`;
     $("render-fps").textContent = `${fmt(s.render_fps, 1)} fps`;
     $("policy-count").textContent = `${(s.policies || []).length} / 6`;
-    $("footer-time").textContent = new Date().toLocaleTimeString("zh-CN", { hour12: false });
+    $("footer-time").textContent = new Date().toLocaleTimeString("en-US", { hour12: false });
 
     // Highlight + knob deck follow the user's selected action, not the policy
     // physically running.  A one-shot (kick/roulade/pick) ends back in stand,
@@ -252,10 +252,10 @@
   }
 
   function setOffline() {
-    $("connection").textContent = "本地未连接";
+    $("connection").textContent = "Disconnected";
     $("connection").classList.add("offline");
     $("pulse").style.background = "var(--accent)";
-    $("run-status").textContent = "离线";
+    $("run-status").textContent = "Offline";
   }
 
   async function refreshState() {
@@ -289,7 +289,7 @@
       }
       if (result.event) addMessage("assistant", result.event);
     } catch (error) {
-      toast("策略切换失败，请检查后端");
+      toast("Could not switch policy. Check the server.");
     }
   }
 
@@ -299,7 +299,7 @@
       const result = await api("/api/pause", { paused });
       if (result.state) updateUI(result.state);
     } catch (error) {
-      toast("暂停失败");
+      toast("Could not pause");
     }
   }
 
@@ -310,11 +310,11 @@
       const result = await api("/api/reset", {});
       if (result.state) updateUI(result.state);
       if (announce) {
-        const label = (result.state && (result.state.mode_label || result.state.mode)) || "当前动作";
-        addMessage("assistant", `已重置姿态，保持在「${label}」。`);
+        const label = (result.state && (result.state.mode_label || result.state.mode)) || "Current motion";
+        addMessage("assistant", `Pose reset; keeping ${label} selected.`);
       }
     } catch (error) {
-      toast("重置失败");
+      toast("Could not reset");
     }
   }
 
@@ -346,13 +346,13 @@
   $("reset-camera").addEventListener("click", async () => {
     try {
       await api("/api/camera/reset", {});
-      toast("视角已复位");
+      toast("View reset");
     } catch (error) {
-      toast("视角复位失败");
+      toast("Could not reset view");
     }
   });
 
-  // 坐下 / 站起 live on the right-panel sitstand preset now; the duplicate
+  // Sit down / Stand up live on the right-panel sitstand preset now; the duplicate
   // console buttons were removed.
   $("walk-button").addEventListener("click", () => setMode("walk"));
   $("stop-button").addEventListener("click", async () => {
@@ -360,7 +360,7 @@
       await api("/api/twist", { vx: 0, vy: 0, wz: 0 });
       await setMode("stand");
     } catch (error) {
-      toast("停止失败");
+      toast("Could not stop");
     }
   });
 
@@ -371,7 +371,7 @@
         const result = await api("/api/head", { yaw });
         if (result.state) updateUI(result.state);
       } catch (error) {
-        toast("头部控制失败");
+        toast("Could not control head");
       }
     });
   });
@@ -423,7 +423,7 @@
   const postTune = (patch) => {
     api("/api/tune", patch).then((result) => {
       if (result.state) updateUI(result.state);
-    }).catch(() => toast("调参未生效，请检查后端"));
+    }).catch(() => toast("Could not apply parameters. Check the server."));
   };
   const tuneFromControls = () => {
     const patch = { smooth_skills: $("tune-smooth-skills").checked };
@@ -443,32 +443,32 @@
   // kick/roulade not crisp), not a verified optimum.
   const ACTION_TUNE = {
     walk: {
-      label: "行走",
+      label: "Walk",
       knobs: ["tune-walk-scale", "tune-legs", "tune-head"],
       preset: { walk_scale: 0.80, walk_default_vx: 0.16, legs_lowpass: 0.45, head_lowpass: 0.40, smooth_skills: false },
     },
     stand: {
-      label: "站立",
+      label: "Stand",
       knobs: ["tune-legs", "tune-head"],
       preset: { legs_lowpass: 0.50, head_lowpass: 0.40 },
     },
     sitstand: {
-      label: "坐 / 站",
+      label: "Sit / stand",
       knobs: ["tune-standup", "tune-sitnudge", "tune-legs"],
       preset: { standup_handoff: 0.40, sit_nudge: 0.12, legs_lowpass: 0.50 },
     },
     ground_pick: {
-      label: "捡东西",
+      label: "Pick up",
       knobs: ["tune-groundpick", "tune-legs"],
       preset: { ground_pick_duration: 0.70, legs_lowpass: 0.50 },
     },
     kick_right: {
-      label: "右踢",
+      label: "Right kick",
       knobs: ["tune-kick-scale", "tune-kick"],
       preset: { kick_scale: 0.70, kick_duration: 0.42, smooth_skills: false },
     },
     roulade: {
-      label: "前滚翻",
+      label: "Forward roll",
       knobs: ["tune-roulade-scale", "tune-roulade", "tune-roulade-prep"],
       preset: { roulade_scale: 1.00, roulade_duration: 3.00, roulade_prep: 1.02, smooth_skills: false },
     },
@@ -490,7 +490,7 @@
     });
     $("console").classList.toggle("no-knobs", active.size === 0);
     const text = $("knobs-caption-text");
-    if (text) text.textContent = cfg ? `${cfg.label} · 该动作调参` : "该动作调参";
+    if (text) text.textContent = cfg ? `${cfg.label} · Motion tuning` : "Motion tuning";
     // Preset slot is per-action: refresh the bar for the new current mode.
     if (typeof renderPresetBar === "function") renderPresetBar();
   }
@@ -548,14 +548,14 @@
   $("console-expand").addEventListener("click", () => {
     const expanded = $("console").classList.toggle("expanded");
     $("console-expand").setAttribute("aria-expanded", String(expanded));
-    $("console-expand").textContent = expanded ? "收起 ◂" : "展开全部参数 ▸";
+    $("console-expand").textContent = expanded ? "Collapse ◂" : "Show all parameters ▸";
   });
 
-  // "恢复本动作推荐值" — reload the current action's recommended preset.
+  // "Restore motion preset" — reload the current action's recommended preset.
   $("tune-reset").addEventListener("click", () => {
     applyActionPreset(currentMode, true);
     writeLoadMode(currentMode, "recommended");
-    toast(`已恢复「${(ACTION_TUNE[currentMode] || {}).label || currentMode}」推荐值`);
+    toast(`Restored recommended values for ${(ACTION_TUNE[currentMode] || {}).label || currentMode}`);
   });
 
   // Advanced: restore every knob to the board deploy value.
@@ -568,13 +568,13 @@
     labelTune();
     tuneFromControls();
     writeLoadMode(currentMode, "deploy");
-    toast("已恢复全部部署值");
+    toast("Restored deployment defaults");
   });
 
   // Single-slot preset (localStorage) --------------------------------------
   // Three buttons: save the current params into one slot, load them back, or
   // load the board deploy defaults. No names, no list, no delete.
-  // One saved slot per action, so each动作的 save/load 互相独立.
+  // One saved slot per action, so each motion has independent save/load state.
   const presetKey = (mode) => `omd.motionlab.preset.v4.${mode || currentMode}`;
   const capturePreset = () => {
     const p = { smooth_skills: $("tune-smooth-skills").checked, saved_at: Date.now() };
@@ -597,7 +597,7 @@
     } catch (error) { /* fall through */ }
     return null;
   };
-  // Load the board deploy values (the "默认载入" button).
+  // Load the board deploy values (the "Load defaults" button).
   const applyDeploy = () => {
     const t = state && state.tune && state.tune.deploy;
     TUNE_SPEC.forEach((s) => {
@@ -612,39 +612,39 @@
     $("preset-load").disabled = !p;
     const label = (ACTION_TUNE[currentMode] || {}).label || currentMode;
     const eyebrow = $("preset-eyebrow");
-    if (eyebrow) eyebrow.textContent = `我的预设 · ${label}`;
+    if (eyebrow) eyebrow.textContent = `My presets · ${label}`;
     const hint = $("preset-hint");
     if (hint) {
-      const when = p && p.saved_at ? new Date(p.saved_at).toLocaleString("zh-CN", { hour12: false }) : "";
+      const when = p && p.saved_at ? new Date(p.saved_at).toLocaleString("en-US", { hour12: false }) : "";
       const intent = readLoadMode();
-      const source = intent === "custom" ? "自定义" : intent === "deploy" ? "默认" : "推荐";
-      const saved = p ? `已存：${when}` : "尚未保存";
-      hint.textContent = `当前：${source}｜${saved}`;
+      const source = intent === "custom" ? "Custom" : intent === "deploy" ? "Default" : "Recommended";
+      const saved = p ? `Saved: ${when}` : "Not saved yet";
+      hint.textContent = `Current: ${source} | ${saved}`;
     }
   };
 
   $("preset-save").addEventListener("click", () => {
     try {
       localStorage.setItem(presetKey(), JSON.stringify(capturePreset()));
-    } catch (error) { toast("保存失败（浏览器存储不可用）"); return; }
+    } catch (error) { toast("Could not save: browser storage unavailable"); return; }
     writeLoadMode(currentMode, "custom");
     renderPresetBar();
-    toast(`已保存「${(ACTION_TUNE[currentMode] || {}).label || currentMode}」参数`);
+    toast(`Saved parameters for ${(ACTION_TUNE[currentMode] || {}).label || currentMode}`);
   });
 
   $("preset-load").addEventListener("click", () => {
     const p = readPreset();
-    if (!p) { toast("该动作还没有保存过参数"); return; }
+    if (!p) { toast("No saved parameters for this motion"); return; }
     applyPreset(p);
     writeLoadMode(currentMode, "custom");
-    const when = p.saved_at ? new Date(p.saved_at).toLocaleString("zh-CN", { hour12: false }) : "";
-    toast(when ? `已载入「${(ACTION_TUNE[currentMode] || {}).label || currentMode}」保存值（${when}）` : "已载入保存值");
+    const when = p.saved_at ? new Date(p.saved_at).toLocaleString("en-US", { hour12: false }) : "";
+    toast(when ? `Loaded saved values for ${(ACTION_TUNE[currentMode] || {}).label || currentMode} (${when})` : "Loaded saved values");
   });
 
   $("preset-default").addEventListener("click", () => {
     applyDeploy();
     writeLoadMode(currentMode, "deploy");
-    toast("已载入默认参数");
+    toast("Loaded default parameters");
   });
 
   renderPresetBar();
@@ -685,10 +685,10 @@
     $("chat-input").value = "";
     try {
       const result = await api("/api/chat", { text: value });
-      addMessage("assistant", result.reply || "已收到。");
+      addMessage("assistant", result.reply || "Command received.");
       if (result.state) updateUI(result.state);
     } catch (error) {
-      addMessage("assistant", "本地服务没有响应。检查 motion-lab/server.py 是否在运行。");
+      addMessage("assistant", "The local server did not respond. Check that motion-lab/server.py is running.");
       setOffline();
     }
   }
@@ -705,21 +705,21 @@
   const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
   if (SpeechRecognition) {
     recognition = new SpeechRecognition();
-    recognition.lang = "zh-CN";
+    recognition.lang = "en-US";
     recognition.interimResults = false;
     recognition.continuous = false;
     recognition.onstart = () => {
       $("mic-button").classList.add("recording");
-      $("mic-label").textContent = "正在听…";
+      $("mic-label").textContent = "Listening…";
     };
     recognition.onend = () => {
       $("mic-button").classList.remove("recording");
-      $("mic-label").textContent = "开始录音";
+      $("mic-label").textContent = "Start recording";
     };
     recognition.onerror = () => {
       $("mic-button").classList.remove("recording");
-      $("mic-label").textContent = "开始录音";
-      toast("没有识别到语音，可以直接输入文字");
+      $("mic-label").textContent = "Start recording";
+      toast("No speech recognized. You can type a command instead.");
     };
     recognition.onresult = (event) => {
       const text = event.results?.[0]?.[0]?.transcript || "";
@@ -732,12 +732,12 @@
         try {
           recognition.start();
         } catch (error) {
-          toast("语音识别启动失败");
+          toast("Could not start speech recognition");
         }
       }
     });
   } else {
-    $("mic-button").addEventListener("click", () => toast("这个浏览器不支持语音输入，请直接输入文字"));
+    $("mic-button").addEventListener("click", () => toast("This browser does not support voice input. Type a command instead."));
   }
 
   // Camera orbit / zoom -----------------------------------------------------

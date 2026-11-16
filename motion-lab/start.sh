@@ -18,7 +18,7 @@ URL="http://${DISPLAY_HOST}:${PORT}/"
 
 open_ui() {
   if [ "${NO_OPEN:-0}" = "1" ]; then
-    echo "NO_OPEN=1：未自动打开浏览器。"
+    echo "NO_OPEN=1: skipping automatic browser launch."
     return 0
   fi
 
@@ -37,7 +37,7 @@ open_ui() {
       ;;
   esac
 
-  echo "未找到自动打开浏览器的命令，请手动打开：$URL"
+  echo "Could not find a browser launcher. Open this URL manually: $URL"
 }
 
 running_pid() {
@@ -87,7 +87,7 @@ find_python() {
 }
 
 if pid="$(running_pid)"; then
-  echo "Motion Lab 已在运行：PID $pid"
+  echo "Motion Lab is already running: PID $pid"
   echo "URL: $URL"
   open_ui
   exit 0
@@ -98,18 +98,18 @@ if [ -f "$PID_FILE" ]; then
 fi
 
 if command -v lsof >/dev/null 2>&1 && lsof -nP -iTCP:"$PORT" -sTCP:LISTEN >/dev/null 2>&1; then
-  echo "端口 $PORT 已被其他进程占用，未自动处理：" >&2
+  echo "Port $PORT is in use by another process:" >&2
   lsof -nP -iTCP:"$PORT" -sTCP:LISTEN >&2 || true
   exit 1
 fi
 
 PYTHON="$(find_python)" || {
-  echo "找不到同时具备 mujoco / onnxruntime / numpy / Pillow 的 Python。" >&2
-  echo "先执行 ./setup.sh，或指定：MOTION_LAB_PYTHON=/path/to/python ./start.sh" >&2
+  echo "Could not find Python with mujoco / onnxruntime / numpy / Pillow installed." >&2
+  echo "Run ./setup.sh first, or use MOTION_LAB_PYTHON=/path/to/python ./start.sh" >&2
   exit 1
 }
 
-echo "使用 Python: $PYTHON"
+echo "Using Python: $PYTHON"
 nohup "$PYTHON" server.py --host "$HOST" --port "$PORT" --fps "$FPS" --quality "$QUALITY" \
   >"$LOG_FILE" 2>&1 &
 PID=$!
@@ -117,10 +117,10 @@ printf '%s\n' "$PID" > "$PID_FILE"
 
 for _ in $(seq 1 40); do
   if curl -fsS --max-time 1 "$URL/api/state" >/dev/null 2>&1; then
-    echo "Motion Lab 已启动"
+    echo "Motion Lab started"
     echo "URL:  $URL"
     echo "PID:  $PID"
-    echo "日志: $LOG_FILE"
+    echo "Log: $LOG_FILE"
     open_ui
     exit 0
   fi
@@ -130,7 +130,7 @@ for _ in $(seq 1 40); do
   sleep 0.25
 done
 
-echo "Motion Lab 启动失败，最后日志：" >&2
+echo "Motion Lab failed to start. Recent log output:" >&2
 kill "$PID" 2>/dev/null || true
 wait "$PID" 2>/dev/null || true
 rm -f "$PID_FILE"

@@ -1,86 +1,64 @@
-# Motion Lab 示例调参快照（不是默认值）
+# Example tuning snapshot — not defaults
 
-> 这是 2026-11-06 某次实测的示例，**不是项目默认值，也不应作为推荐值**。  
-> 数据来源：当时浏览器 localStorage 里每个动作的 `loadmode` / `preset`，以及 `server.py` 的部署默认值和技能常量。  
-> 说明：这里记录的是 **motion-lab 的示例运行参数**，不是 ONNX 权重参数，也不是板端 `robotd.toml`。
+This records an upstream experiment from **November 6, 2026**. These values
+are **not project defaults or recommendations**. They came from per-motion
+browser localStorage load modes/presets and server deployment/skill constants.
+They are Motion Lab settings, not ONNX weights or robotd.toml.
 
-## 载入来源
+## Per-motion values
 
-| 动作 | 示例载入方式 |
+| Motion / ONNX | Loaded source | Action scale | Leg / head low-pass | Timing / special settings |
+|---|---|---:|---|---|
+| walk / OpenMD_walk.onnx | Custom | 1.20 | 0.70 / 0.50 | vx = 0.16 m/s |
+| stand / OpenMD_stand.onnx | Deployment | 1.00 fixed | 0.70 / 0.50 | Hold standing pose |
+| sitstand / OpenMD_sitstand.onnx | Deployment | 1.00 fixed | 0.70 / 0.50 | Stand handoff 0.30 s; sit pulse 0.10 s; command[0] = 1 sit / 0 stand |
+| ground_pick / OpenMD_ground_pick.onnx | Custom | 1.00 fixed | 0.75 / 0.50 | 0.50 phase units, approximately 2.0 s |
+| kick_right / OpenMD_kick_right.onnx | Custom | 1.30 | 0.70 / 0.50, bypassed | 0.50 s; support collision; ball x=0.09, y=−0.042 m |
+| roulade / OpenMD_roulade.onnx | Deployment | 1.00 | 0.70 / 0.50, bypassed | Prepare 1.02 s; timeout 3.0 s; typical completion about 1 s |
+
+Custom presets had also been saved for stand, sitstand, and roulade, but their
+selected load source was deployment, so those saved values were not active.
+
+## Shared values
+
+| Parameter | Example value |
 |---|---|
-| walk | 自定义预设 |
-| stand | 部署默认 |
-| sitstand | 部署默认 |
-| ground_pick | 自定义预设 |
-| kick_right | 自定义预设 |
-| roulade | 部署默认 |
+| Control frequency | 50 Hz |
+| Physics substeps | 5 ms × 4 |
+| Observation / action | 61 → 14 |
+| smooth_skills | false; kick/roll use raw policy output |
+| Default walk speed | 0.16 m/s |
+| Camera follow | 0.08 per control step |
+| Camera distance | 0.82 m, temporarily overridden by manual zoom |
+| Resolution | 840 × 472 |
+| Render target | 24 FPS |
+| JPEG quality | 78 |
+| Exposure correction | 256-entry lookup table |
+| Fall reset | 1.25 rad tilt, 0.035 m height, 1.3 s grace period |
 
-> `stand`、`sitstand`、`roulade` 也保存过自定义预设，但示例中的“载入方式”是部署默认，所以下表使用部署值，不是那些自定义预设值。
+## Skill physics overrides
 
-## 六动作参数
+These are not exposed as tuning-panel sliders.
 
-| 动作 / ONNX | 载入来源 | 动作缩放 | 腿 / 头低通 | 动作关键参数 | 特殊覆盖 |
-|---|---|---:|---|---|---|
-| **walk** / `OpenMD_walk.onnx` | 自定义 | **1.20** | **0.70 / 0.50** | `vx = 0.16 m/s` | 无 |
-| **stand** / `OpenMD_stand.onnx` | 部署默认 | 1.00 固定 | 0.70 / 0.50 | 站立保持 | 无 |
-| **sitstand** / `OpenMD_sitstand.onnx` | 部署默认 | 1.00 固定 | 0.70 / 0.50 | 站起交接 **0.30 s**；起坐脉冲 **0.10 s** | `command[0]`：1 坐 / 0 站 |
-| **ground_pick** / `OpenMD_ground_pick.onnx` | 自定义 | 1.00 固定 | **0.75 / 0.50** | 相位时长 **0.50 ≈ 2.0 s** | 相位编码 |
-| **kick_right** / `OpenMD_kick_right.onnx` | 自定义 | **1.30** | 0.70 / 0.50（技能不滤波） | 踢球 **0.50 s** | support 碰撞；球偏移 `x=0.09, y=-0.042` |
-| **roulade** / `OpenMD_roulade.onnx` | 部署默认 | 1.00 | 0.70 / 0.50（技能不滤波） | 准备 **1.02 s**；超时 **3.0 s**；实际约 **1 s** 结束 | 见下方物理覆盖 |
-
-## 共享运行参数
-
-| 参数 | 示例值 |
+| Roll setting | Value |
 |---|---|
-| 控制频率 | **50 Hz** |
-| 物理步长 | **5 ms × 4** |
-| 观测 / 动作 | **61 → 14** |
-| `smooth_skills` | **false**（kick / roulade 保持原始输出，不被低通） |
-| 默认行走速度 | **0.16 m/s** |
-| 相机跟随 | **0.08 / 控制步** |
-| 相机默认距离 | **0.82 m**（手动缩放会临时覆盖） |
-| 渲染分辨率 | **840 × 472** |
-| 渲染目标 | **24 FPS** |
-| JPEG 质量 | **78** |
-| 过曝处理 | **256 项 LUT** |
-| 失稳复位 | 倾斜 **1.25 rad**、高度 **0.035 m**、持续 **1.3 s** |
+| Actuator kp | ×4 |
+| Torque limit | ×0.8 |
+| Command delay | 5 physics steps / 25 ms |
+| Collisions | Full model |
+| Completion | At least 240° accumulated forward rotation and up > 0.8 |
+| 3.0 s duration | Stalled-roll timeout, not nominal execution time |
 
-## 技能物理覆盖（不在调参面板里）
-
-### roulade
-
-| 项目 | 值 |
+| Right-kick setting | Value |
 |---|---|
-| 执行器 `kp` | **× 4** |
-| 力矩上限 | **× 0.8** |
-| 指令延迟 | **5 个物理步 / 25 ms** |
-| 碰撞 | **完整 full collision** |
-| 结束判定 | 累计前转 **≥ 240°** 且 `up > 0.8` |
-| `roulade_duration = 3.0 s` | 仅“卡住放弃”上限；正常约 1 s |
+| Collisions | Support subset: feet, legs, hips, trunk against floor only |
+| Ball offset | x=0.09 m forward, y=−0.042 m right |
+| Ball radius | 0.035 m |
 
-### kick_right
+## Interpretation
 
-| 项目 | 值 |
-|---|---|
-| 碰撞 | **support 子集**（脚、腿、髋、机身 floor-only） |
-| 球偏移 | 右脚前 **x=0.09 m**、右偏 **y=-0.042 m** |
-| 球半径 | **0.035 m** |
-
-## 关键解释
-
-1. **动作缩放不是六个动作统一值**：示例中 walk 为 **1.20**，kick 为 **1.30**，stand / sitstand / ground_pick / roulade 固定 **1.00**。
-2. **低通对 kick / roulade 不生效**：`smooth_skills=false`，即使面板里显示 0.70 / 0.50，技能仍使用原始策略输出。
-3. **ground_pick 的 0.50 是相位单位，不是 0.5 秒**：按控制步进约等于 **2.0 秒**。
-4. **roulade 的 3.0 秒不是动作时长**：动作按姿态状态结束，约 1 秒；3.0 秒只是防止卡死的放弃时限。
-5. 这些“示例载入”值保存在浏览器 localStorage；**清空站点数据或换浏览器后，会回到对应动作的推荐值/部署默认值**。
-
-## 快速对照
-
-| 动作 | 缩放 | 低通（腿/头） | 来源 |
-|---|---:|---|---|
-| walk | 1.20 | 0.70 / 0.50 | 自定义 |
-| stand | 1.00 | 0.70 / 0.50 | 部署默认 |
-| sitstand | 1.00 | 0.70 / 0.50 | 部署默认 |
-| ground_pick | 1.00 | 0.75 / 0.50 | 自定义 |
-| kick_right | 1.30 | 0.70 / 0.50（不滤波） | 自定义 |
-| roulade | 1.00 | 0.70 / 0.50（不滤波） | 部署默认 |
+- Action scale is per motion: 1.20 walk, 1.30 kick, 1.00 for the others in this experiment.
+- Displayed low-pass values do not affect kick/roll while smooth_skills is false.
+- Pickup's 0.50 is in **phase units**, not seconds.
+- Roll's 3.0 s is a **timeout**; normal state-based completion is about one second.
+- Browser storage holds custom values and selected load sources. Clearing site data or changing browsers restores the applicable recommended/deployment defaults.
