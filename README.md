@@ -42,13 +42,11 @@ OpenMicroDuck 是一个**完全开源**的双足机器人平台：一只 25cm �
 
 适配 Radxa Zero 3W，已经安装 microduck 运行时程序的系统我们已经压缩打包成镜像，希望可以节省大家配置环境的时间。
 
-镜像路径：[Openmicroduck Radxa Zero 3W镜像](https://pan.baidu.com/s/15vAhpStkQ0C7q6i9n2H0tQ?pwd=7yzd)
+镜像路径：[Openmicroduck Radxa Zero 3W镜像, 20261116](https://pan.baidu.com/s/1BI4HADfpOjwhzLgS-t77HA?pwd=nt6M)
 
 ## 交流群
 
-<p align="center">
-  <img src="./assets/wechat_group_qrcode.jpg" width="50%" alt="交流群二维码">
-</p>
+![交流群二维码](./assets/wechat_group_qrcode.jpg)
 
 ## BOM
 
@@ -56,7 +54,7 @@ OpenMicroDuck 是一个**完全开源**的双足机器人平台：一只 25cm �
 
 | 器件                | 型号                   | 规格                                          | 数量   | 参考单价和链接                                                                                                                                                                                                                 |
 | ----------------- | -------------------- | ------------------------------------------- | ---- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 舵机                | **飞特 HD-1910-C001**  | 恒力空心杯舵机，4~8.4V，堵转扭矩 12kg·cm                 | 15   | [118](https://item.taobao.com/item.htm?id=1014620157895&mi_id=0000xBjtqiNSYJUq7QGMPpbYwmNEROqnEVZwYJWi5M4hP3Q&skuId=6133422044091&spm=a21n57.shop_search.0.0.18263d65wuqx4I)                                            |
+| 舵机                | **飞特 HD-1910-C001**  | 恒力空心杯舵机，4~8.4V，堵转扭矩 12kg·cm               | 15   | [118](https://item.taobao.com/item.htm?id=1014620157895&mi_id=0000xBjtqiNSYJUq7QGMPpbYwmNEROqnEVZwYJWi5M4hP3Q&skuId=6133422044091&spm=a21n57.shop_search.0.0.18263d65wuqx4I)                                            |
 | 主控                | **Radxa ZERO 3W**    | RK3566, 2GB RAM，带WiFi, 无eMMC板, 带排针版         | 1    | [309](https://item.taobao.com/item.htm?id=763812025816&mi_id=0000uT5x0cTXxWeiB08JXVyTWI8UsD7hlB5D9f1engmhabY&spm=tbpc.boughtlist.suborder_itemtitle.1.2b562e8dNOWpmj&skuId=6066053424678)                               |
 | SD卡               | MicroSD/TF卡          | 64GB，A1以上                                   | 1    | 60~100                                                                                                                                                                                                                  |
 | Zero Robot HAT转接板 |                      | 兼容AMP2.0 3P插口，可接飞特HD1910。扬声器、麦克风插口换成XH-1.25 | 1    | [228](https://item.taobao.com/item.htm?abbucket=0&id=1090876838510&mi_id=0000ZS5hbUuCFijZNBh6Wm1foqfNFOfbMtdJPq5ofUGb8g8&ns=1&skuId=6311561534333&spm=a21xtw.29978516.product_shelf.11.7a1573ecGsriLO&xxc=taobaoSearch) |
